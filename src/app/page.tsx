@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import {
   Library,
   Check,
@@ -13,6 +15,7 @@ import { formatHours } from "@/lib/hours";
 import { STATUS_META, STATUSES, type Status } from "@/lib/enums";
 import { TierPill } from "@/components/badges";
 import { STATUS_ICON } from "@/components/statusIcon";
+import { ShareToX } from "@/components/ShareToX";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +56,9 @@ function StatCard({
 }
 
 export default async function DashboardPage() {
-  const [stats, collection] = await Promise.all([getStats(), getCollection()]);
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  const [stats, collection] = await Promise.all([getStats(userId), getCollection(userId)]);
   if (stats.total === 0) return <EmptyState />;
 
   const untriaged = stats.byStatus["untriaged"] ?? 0;
@@ -70,11 +75,18 @@ export default async function DashboardPage() {
           <div className="label mb-1">overview</div>
           <h1 className="display text-2xl md:text-3xl">The Empire</h1>
         </div>
-        {untriaged > 0 && (
-          <Link href="/swipe" className="btn btn-primary text-sm">
-            <GalleryHorizontalEnd size={15} strokeWidth={2} /> Triage {untriaged}
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <ShareToX
+            hours={formatHours(stats.totalHours)}
+            watched={stats.watchedCount}
+            total={stats.total}
+          />
+          {untriaged > 0 && (
+            <Link href="/swipe" className="btn btn-primary text-sm">
+              <GalleryHorizontalEnd size={15} strokeWidth={2} /> Triage {untriaged}
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* hero readout */}

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { Radio, ExternalLink, ClipboardPaste } from "lucide-react";
 import { getFeed } from "@/lib/feed";
 import { StatusBadge } from "@/components/badges";
@@ -15,7 +17,9 @@ function when(h: number | null): string {
 }
 
 export default async function FeedPage() {
-  const { items } = await getFeed();
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  const { items } = await getFeed(userId);
 
   return (
     <div className="space-y-4 rise">

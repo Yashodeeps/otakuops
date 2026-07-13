@@ -3,7 +3,7 @@
 Your personal anime empire. Paste a messy list, watch it get parsed and matched to real
 cover art, swipe through the backlog to triage it, and see total hours sunk + what's airing next.
 
-Built for an audience of one. Runs on free tiers.
+Multi-user (sign in with Google or X), each with their own private empire. Runs on free tiers.
 
 ## The loop
 
@@ -35,34 +35,42 @@ but the database is Postgres — grab a free Neon connection string and use it l
 
 ```bash
 DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"  # Neon
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."   # Clerk (auth)
+CLERK_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
+NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
 # ANTHROPIC_API_KEY="sk-ant-..."  # enables the Claude parser + the Ask companion
-# APP_PASSPHRASE="..."            # locks the app behind a shared passphrase (see below)
 ```
 
+- **Clerk** — auth (Google + X sign-in). Create a free app at clerk.com, enable the Google
+  and X (Twitter) social connections, copy the keys. Every route is private per user; data
+  is scoped to the signed-in `userId`.
 - **`ANTHROPIC_API_KEY`** — turns on the Claude-powered parser (Haiku 4.5, cheap) and the
   Ask companion (Opus 4.8). Everything else works without it.
-- **`APP_PASSPHRASE`** — when set, every route requires this passphrase (stored in an
-  httpOnly cookie via `/unlock`). Unset locally = open. **Always set it before deploying**,
-  or your public URL lets anyone spend your Anthropic key.
 
-## Deploy (Vercel + Neon, $0)
+## Deploy (Vercel + Neon + Clerk, $0)
 
-Already wired for Postgres. Steps:
+Already wired for Postgres + Clerk. Steps:
 
 1. **Neon** — create a free project at neon.tech, copy the connection string.
-2. **Push schema** — put that string in `.env` as `DATABASE_URL`, run `pnpm prisma db push`.
-3. **Vercel** — import the repo (or `vercel`), and set env vars:
+2. **Clerk** — create an app at clerk.com, enable Google + X, copy the two keys.
+3. **Push schema** — put the Neon string in `.env` as `DATABASE_URL`, run `pnpm prisma db push`.
+4. **Vercel** — import the repo (or `vercel`), and set env vars:
    - `DATABASE_URL` — the Neon string (use the pooled `-pooler` host on Vercel)
-   - `APP_PASSPHRASE` — **required**, or the public URL is open to anyone
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` — from Clerk
+   - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`
    - `ANTHROPIC_API_KEY` — optional (Claude parser + Ask companion)
-4. `prisma generate` runs automatically on install (`postinstall`); `next build` deploys.
-5. Add to your phone's home screen — it's a PWA (`manifest.webmanifest` + icon).
+5. `prisma generate` runs automatically on install (`postinstall`); `next build` deploys.
+6. Add to your phone's home screen — it's a PWA (`manifest.webmanifest` + icon).
 
 ## Architecture
 
 - **Next.js 16** (App Router) + **Tailwind 4** + **framer-motion** (swipe physics).
-- **Prisma 6 + Postgres** (Neon). Two tables: `Anime` (cached AniList metadata) and
-  `CollectionItem` (your rows). Enums/genres are validated strings + JSON for portability.
+- **Clerk** for auth (Google + X). Everything is private per user; the Clerk `userId` scopes
+  every collection row. `src/middleware.ts` is `clerkMiddleware`.
+- **Prisma 6 + Postgres** (Neon). Two tables: `Anime` (shared AniList metadata cache) and
+  `CollectionItem` (per-user rows, `@@unique([userId, animeId])`). Enums/genres are validated
+  strings + JSON for portability.
 - **`src/lib/`** is the brain:
   - `anilist.ts` — batched GraphQL (aliases for search, `id_in` for the feed) with 429 backoff.
   - `parse.ts` / `parseClaude.ts` / `parseAnime.ts` — heuristic + Claude parsers, one shape,
@@ -70,7 +78,9 @@ Already wired for Postgres. Steps:
   - `match.ts` / `similarity.ts` — confidence-gated AniList matching (auto-accept vs review).
   - `collection.ts` — the service layer; also the hours math (`episodesForStatus`, null-safe).
   - `feed.ts` — batched, cached airing refresh.
-- **API routes** under `src/app/api/` sit behind `src/middleware.ts` (the passphrase lock).
+- **API routes** under `src/app/api/` are auth-gated: each reads `auth()` for the `userId`
+  and scopes its query. A **Share to X** button (`src/components/ShareToX.tsx`) opens a
+  pre-filled tweet — no Twitter API.
 
 ## Notes / known follow-ups
 

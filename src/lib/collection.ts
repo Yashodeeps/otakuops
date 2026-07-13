@@ -86,16 +86,17 @@ export type ImportItem = {
   sourceRawName?: string;
 };
 
-/** Commit reviewed import items into the collection. Idempotent per anime. */
-export async function importItems(items: ImportItem[]): Promise<number> {
+/** Commit reviewed import items into a user's collection. Idempotent per (user, anime). */
+export async function importItems(userId: string, items: ImportItem[]): Promise<number> {
   let count = 0;
   for (const item of items) {
     if (item.media) {
       await upsertAnime(item.media);
       const episodesWatched = episodesForStatus(item.status, item.media);
       await prisma.collectionItem.upsert({
-        where: { animeId: item.media.id },
+        where: { userId_animeId: { userId, animeId: item.media.id } },
         create: {
+          userId,
           animeId: item.media.id,
           status: item.status,
           tier: item.tier,
@@ -112,6 +113,7 @@ export async function importItems(items: ImportItem[]): Promise<number> {
     } else if (item.manualTitle) {
       await prisma.collectionItem.create({
         data: {
+          userId,
           manualTitle: item.manualTitle,
           status: item.status,
           tier: item.tier,
@@ -179,17 +181,23 @@ function toRow(r: RowWithAnime): CollectionRow {
   };
 }
 
-export async function getCollection(filter?: { status?: Status }): Promise<CollectionRow[]> {
+export async function getCollection(
+  userId: string,
+  filter?: { status?: Status },
+): Promise<CollectionRow[]> {
   const rows = await prisma.collectionItem.findMany({
-    where: filter?.status ? { status: filter.status } : undefined,
+    where: { userId, ...(filter?.status ? { status: filter.status } : {}) },
     include: { anime: true },
     orderBy: [{ tier: "asc" }, { personalRank: "asc" }, { updatedAt: "desc" }],
   });
   return rows.map(toRow);
 }
 
-export async function getItem(id: string): Promise<CollectionRow | null> {
-  const r = await prisma.collectionItem.findUnique({ where: { id }, include: { anime: true } });
+export async function getItem(userId: string, id: string): Promise<CollectionRow | null> {
+  const r = await prisma.collectionItem.findFirst({
+    where: { id, userId },
+    include: { anime: true },
+  });
   return r ? toRow(r) : null;
 }
 
@@ -200,11 +208,15 @@ export type ItemUpdate = {
   personalRank?: number | null;
 };
 
-/** Update one item. Changing status recomputes episodesWatched (unless the
- *  caller explicitly passed one, e.g. the half-finished stepper). */
-export async function updateItem(id: string, update: ItemUpdate): Promise<CollectionRow | null> {
-  const existing = await prisma.collectionItem.findUnique({
-    where: { id },
+/** Update one of the user's items. Changing status recomputes episodesWatched
+ *  (unless the caller explicitly passed one, e.g. the half-finished stepper). */
+export async function updateItem(
+  userId: string,
+  id: string,
+  update: ItemUpdate,
+): Promise<CollectionRow | null> {
+  const existing = await prisma.collectionItem.findFirst({
+    where: { id, userId },
     include: { anime: true },
   });
   if (!existing) return null;
@@ -230,8 +242,8 @@ export async function updateItem(id: string, update: ItemUpdate): Promise<Collec
   return toRow(updated);
 }
 
-export async function deleteItem(id: string): Promise<void> {
-  await prisma.collectionItem.delete({ where: { id } });
+export async function deleteItem(userId: string, id: string): Promise<void> {
+  await prisma.collectionItem.deleteMany({ where: { id, userId } });
 }
 
 // Aggregate stats for the empire dashboard.
@@ -245,8 +257,8 @@ export type EmpireStats = {
   tiers: Record<string, number>;
 };
 
-export async function getStats(): Promise<EmpireStats> {
-  const rows = await getCollection();
+export async function getStats(userId: string): Promise<EmpireStats> {
+  const rows = await getCollection(userId);
   const byStatus: Record<string, number> = {};
   const tiers: Record<string, number> = {};
   const genreCount = new Map<string, number>();

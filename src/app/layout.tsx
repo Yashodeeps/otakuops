@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist_Mono, Bricolage_Grotesque } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { NavBar } from "@/components/NavBar";
 
@@ -25,18 +26,37 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+// Theme Clerk's UI to match the ops-console palette (no @clerk/themes dep needed).
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#38d9c0",
+    colorBackground: "#101013",
+    colorText: "#f3f3f4",
+    colorTextSecondary: "#9a9aa4",
+    colorInputBackground: "#16161b",
+    colorInputText: "#f3f3f4",
+    colorNeutral: "#f3f3f4",
+    borderRadius: "10px",
+  },
+  elements: {
+    card: { border: "1px solid #212127" },
+  },
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`${sans.variable} ${mono.variable} ${display.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <NavBar />
-        <main className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-6 pb-28 pt-5 md:pt-8">
-          {children}
-        </main>
-      </body>
-    </html>
+    <ClerkProvider appearance={clerkAppearance}>
+      <html
+        lang="en"
+        className={`${sans.variable} ${mono.variable} ${display.variable} h-full antialiased`}
+      >
+        <body className="min-h-full flex flex-col">
+          <NavBar />
+          <main className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-6 pb-28 pt-5 md:pt-8">
+            {children}
+          </main>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

@@ -37,13 +37,15 @@ model Anime {
   lastRefreshedAt DateTime @default(now())
   createdAt       DateTime @default(now())
 
-  collectionItem CollectionItem?
+  // shared metadata cache — one Anime can appear in many users' collections
+  collectionItems CollectionItem[]
 }
 
-// The user's collection. One row per show they've added.
+// A user's collection. One row per (user, show).
 model CollectionItem {
   id              String  @id @default(cuid())
-  animeId         Int?    @unique // nullable: manual stubs (no AniList match) allowed
+  userId          String // Clerk user id — the scoping key
+  animeId         Int? // nullable: manual stubs (no AniList match) allowed
   anime           Anime?  @relation(fields: [animeId], references: [id])
   manualTitle     String? // display title when animeId is null
   status          String  @default("untriaged") // see STATUSES in src/lib/enums.ts
@@ -54,4 +56,8 @@ model CollectionItem {
   note            String?
   addedAt         DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  // one row per user per anime; NULL animeId (manual stubs) stay distinct in Postgres
+  @@unique([userId, animeId])
+  @@index([userId, status])
 }

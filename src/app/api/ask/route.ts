@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCollection } from "@/lib/collection";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-// The thin companion: feed the whole collection to Claude and answer. Opus for
+// The thin companion: feed the user's collection to Claude and answer. Opus for
 // quality recommendations (the parser uses cheap Haiku; this is low-volume).
 export async function POST(req: Request) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
       { error: "Set ANTHROPIC_API_KEY to enable the companion." },
@@ -19,7 +23,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "question required" }, { status: 400 });
   }
 
-  const rows = await getCollection();
+  const rows = await getCollection(userId);
   const context =
     rows
       .map((r) => {

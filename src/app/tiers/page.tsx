@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { ClipboardPaste } from "lucide-react";
 import { getCollection } from "@/lib/collection";
 import { TIER_META } from "@/lib/enums";
@@ -9,7 +11,9 @@ export const dynamic = "force-dynamic";
 const ORDER: Tier[] = ["S", "A", "B", "C", "D", "unranked"];
 
 export default async function TiersPage() {
-  const rows = await getCollection();
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  const rows = await getCollection(userId);
 
   if (rows.length === 0) {
     return (

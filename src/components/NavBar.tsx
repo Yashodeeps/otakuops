@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   ClipboardPaste,
@@ -41,26 +42,33 @@ export function NavBar() {
             <span className="display text-[15px] tracking-tight">OtakuOps</span>
             <span className="label hidden sm:inline ml-1">command center</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-0.5">
-            {TABS.map((t) => {
-              const active = isActive(pathname, t.href);
-              const Icon = t.icon;
-              return (
-                <Link
-                  key={t.href}
-                  href={t.href}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition ${
-                    active
-                      ? "text-[var(--text)] bg-[var(--surface-2)]"
-                      : "text-[var(--muted)] hover:text-[var(--text)]"
-                  }`}
-                >
-                  <Icon size={15} strokeWidth={2} color={active ? "var(--accent)" : "currentColor"} />
-                  {t.label}
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="flex items-center gap-2">
+            <nav className="hidden md:flex items-center gap-0.5">
+              {TABS.map((t) => {
+                const active = isActive(pathname, t.href);
+                const Icon = t.icon;
+                return (
+                  <Link
+                    key={t.href}
+                    href={t.href}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition ${
+                      active
+                        ? "text-[var(--text)] bg-[var(--surface-2)]"
+                        : "text-[var(--muted)] hover:text-[var(--text)]"
+                    }`}
+                  >
+                    <Icon size={15} strokeWidth={2} color={active ? "var(--accent)" : "currentColor"} />
+                    {t.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="md:ml-1">
+              <UserButton
+                appearance={{ elements: { avatarBox: { width: 28, height: 28 } } }}
+              />
+            </div>
+          </div>
         </div>
       </header>
 

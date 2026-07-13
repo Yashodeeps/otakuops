@@ -19,9 +19,9 @@ export type FeedItem = {
   status: string; // your watch status for this show
 };
 
-export async function getFeed(): Promise<{ items: FeedItem[]; refreshed: number }> {
+export async function getFeed(userId: string): Promise<{ items: FeedItem[]; refreshed: number }> {
   const rows = await prisma.collectionItem.findMany({
-    where: { animeId: { not: null } },
+    where: { userId, animeId: { not: null } },
     include: { anime: true },
   });
 
@@ -45,7 +45,7 @@ export async function getFeed(): Promise<{ items: FeedItem[]; refreshed: number 
 
   // Re-read so we reflect any refresh, then build the feed from cached fields.
   const fresh = await prisma.collectionItem.findMany({
-    where: { animeId: { not: null } },
+    where: { userId, animeId: { not: null } },
     include: { anime: true },
   });
 
