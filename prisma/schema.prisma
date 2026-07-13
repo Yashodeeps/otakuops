@@ -1,0 +1,57 @@
+// OtakuOps data spine — Postgres (Neon on Vercel, and locally via the same URL).
+// Enums/arrays are modelled as validated strings + JSON so the schema stays
+// portable; the app layer (src/lib/enums.ts) is the source of truth for values.
+//
+// Sync the schema to the DB with:  pnpm prisma db push
+// (nullable @unique animeId still allows many manual stubs — Postgres treats
+//  NULLs as distinct in unique indexes, same as SQLite.)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Cached AniList metadata. One row per real anime we've ever looked up.
+model Anime {
+  id           Int     @id // AniList media id
+  title        String // best display title (english ?? romaji)
+  titleRomaji  String?
+  titleEnglish String?
+  titleNative  String?
+  coverImage   String?
+  bannerImage  String?
+  episodes     Int? // frequently null for ongoing shows
+  duration     Int? // minutes per episode, frequently null
+  format       String? // TV, TV_SHORT, MOVIE, OVA, ONA, SPECIAL, MUSIC
+  airingStatus String? // AniList status: FINISHED, RELEASING, NOT_YET_RELEASED...
+  genresJson   String  @default("[]") // JSON array of genre strings
+  seasonYear   Int?
+  averageScore Int? // 0-100
+  siteUrl      String?
+  nextAiringAt    Int? // unix seconds of next episode airing
+  nextAiringEp    Int?
+  lastRefreshedAt DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  collectionItem CollectionItem?
+}
+
+// The user's collection. One row per show they've added.
+model CollectionItem {
+  id              String  @id @default(cuid())
+  animeId         Int?    @unique // nullable: manual stubs (no AniList match) allowed
+  anime           Anime?  @relation(fields: [animeId], references: [id])
+  manualTitle     String? // display title when animeId is null
+  status          String  @default("untriaged") // see STATUSES in src/lib/enums.ts
+  tier            String  @default("unranked") // S/A/B/C/D/unranked
+  personalRank    Int? // ordering within a tier
+  episodesWatched Int     @default(0)
+  sourceRawName   String? // the original pasted text this came from
+  note            String?
+  addedAt         DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
