@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { ClipboardPaste } from "lucide-react";
 import { getCollection } from "@/lib/collection";
+import { SetupNeeded } from "@/components/SetupNeeded";
 import { TIER_META } from "@/lib/enums";
 import type { Tier } from "@/lib/enums";
 
@@ -13,7 +14,8 @@ const ORDER: Tier[] = ["S", "A", "B", "C", "D", "unranked"];
 export default async function TiersPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
-  const rows = await getCollection(userId);
+  const rows = await getCollection(userId).catch(() => null);
+  if (!rows) return <SetupNeeded />;
 
   if (rows.length === 0) {
     return (

@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { Radio, ExternalLink, ClipboardPaste } from "lucide-react";
 import { getFeed } from "@/lib/feed";
 import { StatusBadge } from "@/components/badges";
+import { SetupNeeded } from "@/components/SetupNeeded";
 import type { Status } from "@/lib/enums";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,9 @@ function when(h: number | null): string {
 export default async function FeedPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
-  const { items } = await getFeed(userId);
+  const feed = await getFeed(userId).catch(() => null);
+  if (!feed) return <SetupNeeded />;
+  const { items } = feed;
 
   return (
     <div className="space-y-4 rise">

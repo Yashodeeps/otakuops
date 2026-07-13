@@ -16,6 +16,7 @@ import { STATUS_META, STATUSES, type Status } from "@/lib/enums";
 import { TierPill } from "@/components/badges";
 import { STATUS_ICON } from "@/components/statusIcon";
 import { ShareToX } from "@/components/ShareToX";
+import { SetupNeeded } from "@/components/SetupNeeded";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,9 @@ function StatCard({
 export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
-  const [stats, collection] = await Promise.all([getStats(userId), getCollection(userId)]);
+  const data = await Promise.all([getStats(userId), getCollection(userId)]).catch(() => null);
+  if (!data) return <SetupNeeded />;
+  const [stats, collection] = data;
   if (stats.total === 0) return <EmptyState />;
 
   const untriaged = stats.byStatus["untriaged"] ?? 0;
