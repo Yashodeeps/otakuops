@@ -192,8 +192,8 @@ export default function ImportPage() {
                 {reviewCount > 0 ? `${reviewCount} need a look` : "all matched cleanly"}
               </span>
               <span className="chip">
-                {engine === "claude" ? <Bot size={12} /> : <Cpu size={12} />}
-                {engine === "claude" ? "AI parse" : "local parse"}
+                {engine === "grok" ? <Bot size={12} /> : <Cpu size={12} />}
+                {engine === "grok" ? "Grok parse" : "local parse"}
               </span>
             </div>
             <div className="flex gap-2">

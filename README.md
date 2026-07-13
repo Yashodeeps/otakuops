@@ -8,7 +8,7 @@ Multi-user (sign in with Google or X), each with their own private empire. Runs 
 ## The loop
 
 1. **Import** — paste a chaotic blob (rankings, statuses, bullets, commas). It's parsed
-   (Claude if a key is set, a local heuristic otherwise) and each title is matched to
+   (Grok if a key is set, a local heuristic otherwise) and each title is matched to
    [AniList](https://anilist.co). High-confidence matches auto-accept; only the ambiguous
    ones need a look.
 2. **Swipe** — a Bumble-style deck over cover art. Flick right = watched, left = dropped,
@@ -28,7 +28,7 @@ pnpm prisma db push     # creates the tables in your DB
 pnpm dev                # http://localhost:3000
 ```
 
-AniList is public and no Anthropic key is required (a local heuristic parser handles imports),
+AniList is public and no AI key is required (a local heuristic parser handles imports),
 but the database is Postgres — grab a free Neon connection string and use it locally too.
 
 ### Env (`.env`)
@@ -39,14 +39,15 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."   # Clerk (auth)
 CLERK_SECRET_KEY="sk_test_..."
 NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
 NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
-# ANTHROPIC_API_KEY="sk-ant-..."  # enables the Claude parser + the Ask companion
+# XAI_API_KEY="xai-..."   # enables the Grok parser + the Ask companion
+# XAI_MODEL="grok-3"      # optional model override
 ```
 
-- **Clerk** — auth (Google + X sign-in). Create a free app at clerk.com, enable the Google
-  and X (Twitter) social connections, copy the keys. Every route is private per user; data
+- **Clerk** — auth (Google sign-in; X can be added later). Create a free app at clerk.com,
+  enable the Google social connection, copy the keys. Every route is private per user; data
   is scoped to the signed-in `userId`.
-- **`ANTHROPIC_API_KEY`** — turns on the Claude-powered parser (Haiku 4.5, cheap) and the
-  Ask companion (Opus 4.8). Everything else works without it.
+- **`XAI_API_KEY`** — turns on the Grok-powered parser and the Ask companion (xAI, key from
+  console.x.ai). Everything else works without it; the parser falls back to a local heuristic.
 
 ## Deploy (Vercel + Neon + Clerk, $0)
 
@@ -59,7 +60,7 @@ Already wired for Postgres + Clerk. Steps:
    - `DATABASE_URL` — the Neon string (use the pooled `-pooler` host on Vercel)
    - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` — from Clerk
    - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up`
-   - `ANTHROPIC_API_KEY` — optional (Claude parser + Ask companion)
+   - `XAI_API_KEY` — optional (Grok parser + Ask companion)
 5. `prisma generate` runs automatically on install (`postinstall`); `next build` deploys.
 6. Add to your phone's home screen — it's a PWA (`manifest.webmanifest` + icon).
 
@@ -73,8 +74,8 @@ Already wired for Postgres + Clerk. Steps:
   strings + JSON for portability.
 - **`src/lib/`** is the brain:
   - `anilist.ts` — batched GraphQL (aliases for search, `id_in` for the feed) with 429 backoff.
-  - `parse.ts` / `parseClaude.ts` / `parseAnime.ts` — heuristic + Claude parsers, one shape,
-    graceful fallback.
+  - `parse.ts` / `parseGrok.ts` / `parseAnime.ts` — heuristic + Grok (xAI) parsers, one shape,
+    graceful fallback. `xai.ts` is the shared Grok client.
   - `match.ts` / `similarity.ts` — confidence-gated AniList matching (auto-accept vs review).
   - `collection.ts` — the service layer; also the hours math (`episodesForStatus`, null-safe).
   - `feed.ts` — batched, cached airing refresh.
