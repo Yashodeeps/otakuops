@@ -12,6 +12,11 @@ import {
   Undo2,
   Star,
   Flame,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  SkipForward,
   type LucideIcon,
 } from "lucide-react";
 import { TIER_META, type Status, type Tier } from "@/lib/enums";
@@ -175,7 +180,7 @@ function FlingBridge({ fling }: { fling: (status: Status, d: Dir) => void }) {
   return null;
 }
 
-type HistoryEntry = { card: DeckCard; createdId?: string };
+type HistoryEntry = { card: DeckCard; createdId?: string; skipped?: boolean };
 
 export default function SwipePage() {
   const [cards, setCards] = useState<DeckCard[] | null>(null);
@@ -265,11 +270,23 @@ export default function SwipePage() {
     [cards, i, fetchMore],
   );
 
+  // Skip: advance without touching the collection (decide later).
+  const skip = useCallback(() => {
+    const card = cards?.[i];
+    if (!card) return;
+    history.current.push({ card, skipped: true });
+    setI((n) => {
+      const next = n + 1;
+      if (cards && cards.length - next <= 5) fetchMore();
+      return next;
+    });
+  }, [cards, i, fetchMore]);
+
   function undo() {
     if (i === 0) return;
     const entry = history.current.pop();
     setI((n) => n - 1);
-    if (!entry) return;
+    if (!entry || entry.skipped) return; // skip wrote nothing to revert
     if (entry.card.kind === "collection" && entry.card.itemId) {
       fetch(`/api/collection/${entry.card.itemId}`, {
         method: "PATCH",
@@ -338,37 +355,58 @@ export default function SwipePage() {
         <Card key={`${current.kind}-${current.animeId}-${current.itemId ?? "d"}`} card={current} onCommit={commit} />
       </div>
 
-      <div className="grid grid-cols-2 gap-y-1 gap-x-8 label mb-3 w-full max-w-[340px]">
-        <span>← dropped</span>
-        <span className="text-right">watched →</span>
-        <span>↓ watching</span>
-        <span className="text-right">watchlist ↑</span>
+      {/* direction compass — big, color-coded, and tappable (swipe or tap) */}
+      <div className="w-full max-w-[340px] space-y-2 mb-3">
+        <div className="flex justify-center">
+          <DirCue color="#5aa9e6" arrow="up" Icon={Bookmark} label="Watchlist" onClick={() => activeFling?.("watchlist", "up")} />
+        </div>
+        <div className="flex justify-between gap-2">
+          <DirCue color="#ff6b6b" arrow="left" Icon={Trash2} label="Dropped" onClick={() => activeFling?.("dropped", "left")} />
+          <DirCue color="#7bd88f" arrow="right" Icon={Check} label="Watched" onClick={() => activeFling?.("watched", "right")} />
+        </div>
+        <div className="flex justify-center">
+          <DirCue color="#ffb454" arrow="down" Icon={Play} label="Watching" onClick={() => activeFling?.("watching", "down")} />
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap justify-center max-w-[360px]">
-        <ActionBtn color="#ff6b6b" Icon={Trash2} label="Drop" onClick={() => activeFling?.("dropped", "left")} />
-        <ActionBtn color="#ffb454" Icon={Play} label="Watching" onClick={() => activeFling?.("watching", "down")} />
-        <ActionBtn color="#c9a4ff" Icon={Hourglass} label="Half" onClick={() => commit("half_finished", current.tier)} />
-        <ActionBtn color="#5aa9e6" Icon={Bookmark} label="Later" onClick={() => activeFling?.("watchlist", "up")} />
-        <ActionBtn color="#7bd88f" Icon={Check} label="Watched" onClick={() => activeFling?.("watched", "right")} />
+      {/* non-directional actions */}
+      <div className="flex items-center gap-2 justify-center">
+        <button
+          className="btn text-sm"
+          style={{ color: "#c9a4ff" }}
+          onClick={() => commit("half_finished", current.tier)}
+        >
+          <Hourglass size={15} strokeWidth={2} /> Half-finished
+        </button>
+        <button className="btn text-sm text-[var(--muted)]" onClick={skip}>
+          <SkipForward size={15} strokeWidth={2} /> Skip
+        </button>
       </div>
     </div>
   );
 }
 
-function ActionBtn({
+function DirCue({
   color,
+  arrow,
   Icon,
   label,
   onClick,
 }: {
   color: string;
+  arrow: "up" | "down" | "left" | "right";
   Icon: LucideIcon;
   label: string;
   onClick: () => void;
 }) {
+  const Arrow = { up: ArrowUp, down: ArrowDown, left: ArrowLeft, right: ArrowRight }[arrow];
   return (
-    <button className="btn text-sm" style={{ color }} onClick={onClick}>
+    <button
+      onClick={onClick}
+      className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-sm font-semibold transition active:scale-95"
+      style={{ borderColor: color, color, background: `${color}14` }}
+    >
+      <Arrow size={16} strokeWidth={2.5} />
       <Icon size={15} strokeWidth={2} />
       {label}
     </button>
