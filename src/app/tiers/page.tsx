@@ -9,7 +9,7 @@ import type { Tier } from "@/lib/enums";
 
 export const dynamic = "force-dynamic";
 
-const ORDER: Tier[] = ["S", "A", "B", "C", "D", "unranked"];
+const ORDER: Tier[] = ["S", "A", "B", "C", "D", "E", "unranked"];
 
 export default async function TiersPage() {
   const { userId } = await auth();

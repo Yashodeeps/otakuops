@@ -30,6 +30,8 @@ export function tierColor(tier: string): string {
       return "var(--tier-c)";
     case "D":
       return "var(--tier-d)";
+    case "E":
+      return "var(--tier-e)";
     default:
       return "var(--faint)";
   }

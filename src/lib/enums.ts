@@ -11,7 +11,7 @@ export const STATUSES = [
 ] as const;
 export type Status = (typeof STATUSES)[number];
 
-export const TIERS = ["S", "A", "B", "C", "D", "unranked"] as const;
+export const TIERS = ["S", "A", "B", "C", "D", "E", "unranked"] as const;
 export type Tier = (typeof TIERS)[number];
 
 // Statuses whose watched-time counts toward total hours.
@@ -36,6 +36,7 @@ export const TIER_META: Record<Tier, { label: string; color: string }> = {
   B: { label: "B", color: "#ffd447" },
   C: { label: "C", color: "#7bd88f" },
   D: { label: "D", color: "#5aa9e6" },
+  E: { label: "E", color: "#a07be0" },
   unranked: { label: "—", color: "#62626c" },
 };
 

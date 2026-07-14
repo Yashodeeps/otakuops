@@ -10,4 +10,10 @@ export function xaiClient(): OpenAI {
   });
 }
 
+// Ask companion — quality matters, reasoning is fine.
 export const XAI_MODEL = process.env.XAI_MODEL ?? "grok-4.5";
+
+// Parser — a simple structured task run on big lists, so use a fast NON-reasoning
+// model. grok-4.5 (reasoning) takes ~70s on a 150-title list and times out;
+// the non-reasoning model does the same in ~29s with no reasoning-token cost.
+export const XAI_PARSE_MODEL = process.env.XAI_PARSE_MODEL ?? "grok-4.20-0309-non-reasoning";

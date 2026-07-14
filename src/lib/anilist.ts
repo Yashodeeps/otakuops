@@ -107,7 +107,7 @@ async function gql<T>(query: string, variables: Record<string, unknown>): Promis
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const BATCH = 8; // aliases per request
+const BATCH = 10; // aliases per request
 
 /**
  * Search AniList for many titles at once. Returns, for each input name (in order),
@@ -136,7 +136,7 @@ export async function searchBatch(
       const page = data[`a${j}`];
       out.push((page?.media ?? []).map(normalize));
     });
-    if (i + BATCH < names.length) await sleep(700); // be polite between requests
+    if (i + BATCH < names.length) await sleep(350); // stay well under AniList's rate limit
   }
   return out;
 }

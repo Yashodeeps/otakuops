@@ -29,15 +29,16 @@ function scoreToTier(n: number, outOf: number): Tier {
   if (s >= 8) return "A";
   if (s >= 7) return "B";
   if (s >= 6) return "C";
-  return "D";
+  if (s >= 5) return "D";
+  return "E";
 }
 
-// Is this line ONLY a tier label? e.g. "S Tier", "Tier A", "S:", "B -"
+// Is this line ONLY a tier label? e.g. "S Tier", "Tier A", "S:", "E -"
 function headerTier(line: string): Tier | null {
   const t = line.trim().replace(/[:\-–—]+$/, "").trim();
-  let m = t.match(/^tier\s*([sabcd])$/i) || t.match(/^([sabcd])\s*[- ]?\s*tier$/i);
+  const m = t.match(/^tier\s*([sabcde])$/i) || t.match(/^([sabcde])\s*[- ]?\s*tier$/i);
   if (m) return m[1].toUpperCase() as Tier;
-  if (/^([sabcd])$/i.test(t)) return t.toUpperCase() as Tier;
+  if (/^([sabcde])$/i.test(t)) return t.toUpperCase() as Tier;
   return null;
 }
 
@@ -76,7 +77,7 @@ function extractInline(text: string): { name: string; tier: Tier | null; status:
   }
 
   // inline tier token like "(S)" or "[A]" or " - S tier"
-  const tierTok = s.match(/[([\-–—]\s*([sabcd])\s*(?:tier)?\s*[)\]]?\s*$/i);
+  const tierTok = s.match(/[([\-–—]\s*([sabcde])\s*(?:tier)?\s*[)\]]?\s*$/i);
   if (tierTok && !tier) {
     tier = tierTok[1].toUpperCase() as Tier;
     s = s.replace(tierTok[0], " ");

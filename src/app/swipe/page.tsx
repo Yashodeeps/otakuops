@@ -141,7 +141,7 @@ function Card({ card, onCommit }: { card: DeckCard; onCommit: (s: Status, t: Tie
           </div>
           <div className="flex items-center gap-1.5 mt-3">
             <span className="label text-white/40 mr-1">rank</span>
-            {(["S", "A", "B", "C", "D"] as const).map((t) => (
+            {(["S", "A", "B", "C", "D", "E"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTier(t)}

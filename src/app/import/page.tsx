@@ -174,7 +174,8 @@ export default function ImportPage() {
             {error && <span className="text-[var(--tier-s)] text-sm">{error}</span>}
           </div>
           <p className="label leading-relaxed">
-            no ai key → local parser handles it · cover art + episode counts from anilist either way
+            parsed by grok ai when your key is set (a local parser fills in otherwise) · the result
+            shows which engine ran · art + episodes from anilist
           </p>
         </div>
       )}

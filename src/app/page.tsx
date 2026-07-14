@@ -73,7 +73,7 @@ export default async function DashboardPage() {
   const maxStatus = Math.max(1, ...STATUSES.map((s) => stats.byStatus[s] ?? 0));
   const topShows = collection
     .filter((c) => c.tier !== "unranked" && c.coverImage)
-    .sort((a, b) => "SABCD".indexOf(a.tier) - "SABCD".indexOf(b.tier))
+    .sort((a, b) => "SABCDE".indexOf(a.tier) - "SABCDE".indexOf(b.tier))
     .slice(0, 6);
 
   return (
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
           <div>
             <div className="label mb-3">tier spread</div>
             <div className="flex gap-2.5 flex-wrap">
-              {(["S", "A", "B", "C", "D"] as const).map((t) => (
+              {(["S", "A", "B", "C", "D", "E"] as const).map((t) => (
                 <div key={t} className="flex flex-col items-center gap-1.5">
                   <TierPill tier={t} />
                   <span className="readout text-xs text-[var(--muted)]">{stats.tiers[t] ?? 0}</span>
