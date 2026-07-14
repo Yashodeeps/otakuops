@@ -7,8 +7,6 @@ import {
   Check,
   ChevronLeft,
   ArrowRight,
-  Bot,
-  Cpu,
   GalleryHorizontalEnd,
   Loader2,
 } from "lucide-react";
@@ -41,7 +39,6 @@ Dropped - Bleach (dnf midway)`;
 export default function ImportPage() {
   const [text, setText] = useState("");
   const [phase, setPhase] = useState<"input" | "loading" | "review" | "done">("input");
-  const [engine, setEngine] = useState<string>("");
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [importedCount, setImportedCount] = useState(0);
@@ -60,7 +57,6 @@ export default function ImportPage() {
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "parse failed");
       const data = (await res.json()) as { engine: string; entries: MatchedEntry[] };
-      setEngine(data.engine);
       setRows(
         data.entries.map((e) => ({
           rawName: e.parsed.rawName,
@@ -210,11 +206,6 @@ export default function ImportPage() {
               </span>
             </span>
           </button>
-
-          <p className="label leading-relaxed">
-            parsed by grok ai when your key is set (a local parser fills in otherwise) · the result
-            shows which engine ran · art + episodes from anilist
-          </p>
         </div>
       )}
 
@@ -229,10 +220,6 @@ export default function ImportPage() {
               <span className="text-[var(--faint)]">·</span>
               <span className="text-[var(--muted)]">
                 {reviewCount > 0 ? `${reviewCount} need a look` : "all matched cleanly"}
-              </span>
-              <span className="chip">
-                {engine === "grok" ? <Bot size={12} /> : <Cpu size={12} />}
-                {engine === "grok" ? "Grok parse" : "local parse"}
               </span>
             </div>
             <div className="flex gap-2">
