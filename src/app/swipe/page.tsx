@@ -11,10 +11,11 @@ import {
   Hourglass,
   Undo2,
   Star,
+  Flame,
   type LucideIcon,
 } from "lucide-react";
 import { TIER_META, type Status, type Tier } from "@/lib/enums";
-import type { CollectionRow } from "@/lib/collection";
+import type { DeckCard } from "@/lib/deck";
 
 type Dir = "left" | "right" | "up" | "down";
 
@@ -27,11 +28,11 @@ const DIR: Record<Dir, { status: Status; label: string; color: string; Icon: Luc
 
 const THRESHOLD = 110;
 
-function Card({ item, onCommit }: { item: CollectionRow; onCommit: (s: Status, t: Tier) => void }) {
+function Card({ card, onCommit }: { card: DeckCard; onCommit: (s: Status, t: Tier) => void }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotate = useTransform(x, [-240, 240], [-12, 12]);
-  const [tier, setTier] = useState<Tier>(item.tier);
+  const [tier, setTier] = useState<Tier>(card.tier);
   const flung = useRef(false);
 
   const rightOp = useTransform(x, [40, 150], [0, 1]);
@@ -97,25 +98,33 @@ function Card({ item, onCommit }: { item: CollectionRow; onCommit: (s: Status, t
       <div className="relative w-full h-full rounded-xl overflow-hidden border border-[var(--border-2)] bg-[var(--surface-2)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={item.coverImage ?? ""}
-          alt={item.title}
+          src={card.coverImage ?? ""}
+          alt={card.title}
           draggable={false}
           className="w-full h-full object-cover"
         />
+        {card.kind === "discover" && (
+          <div
+            className="absolute top-3 left-3 chip"
+            style={{ background: "rgba(10,10,12,0.7)", borderColor: "var(--accent)", color: "var(--accent)" }}
+          >
+            <Flame size={11} strokeWidth={2} /> popular
+          </div>
+        )}
         <div className="absolute inset-x-0 bottom-0 p-4 bg-black/80 backdrop-blur-md border-t border-white/10">
           <div className="flex items-center gap-2 label mb-1.5 text-white/50">
-            {item.format && <span>{item.format}</span>}
-            {item.episodes && <span>· {item.episodes} ep</span>}
-            {item.seasonYear && <span>· {item.seasonYear}</span>}
-            {item.averageScore && (
+            {card.format && <span>{card.format}</span>}
+            {card.episodes && <span>· {card.episodes} ep</span>}
+            {card.seasonYear && <span>· {card.seasonYear}</span>}
+            {card.averageScore && (
               <span className="flex items-center gap-0.5">
-                · <Star size={10} fill="currentColor" /> {item.averageScore}
+                · <Star size={10} fill="currentColor" /> {card.averageScore}
               </span>
             )}
           </div>
-          <h2 className="display text-xl md:text-2xl text-white leading-tight">{item.title}</h2>
+          <h2 className="display text-xl md:text-2xl text-white leading-tight">{card.title}</h2>
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {item.genres.slice(0, 3).map((g) => (
+            {card.genres.slice(0, 3).map((g) => (
               <span
                 key={g}
                 className="text-[11px] px-2 py-0.5 rounded border text-white/70"
@@ -166,53 +175,115 @@ function FlingBridge({ fling }: { fling: (status: Status, d: Dir) => void }) {
   return null;
 }
 
+type HistoryEntry = { card: DeckCard; createdId?: string };
+
 export default function SwipePage() {
-  const [items, setItems] = useState<CollectionRow[] | null>(null);
+  const [cards, setCards] = useState<DeckCard[] | null>(null);
   const [i, setI] = useState(0);
-  const [history, setHistory] = useState<{ id: string; status: Status; tier: Tier }[]>([]);
+  const [page, setPage] = useState(1);
+  const [noMore, setNoMore] = useState(false);
+  const history = useRef<HistoryEntry[]>([]);
+  const loadingMore = useRef(false);
+  const seen = useRef<Set<number>>(new Set());
+
+  const appendCards = useCallback((incoming: DeckCard[]) => {
+    setCards((prev) => {
+      const base = prev ?? [];
+      const fresh = incoming.filter((c) => {
+        if (c.animeId == null) return true;
+        if (seen.current.has(c.animeId)) return false;
+        seen.current.add(c.animeId);
+        return true;
+      });
+      return [...base, ...fresh];
+    });
+  }, []);
 
   useEffect(() => {
-    fetch("/api/collection?status=untriaged")
+    fetch("/api/deck?page=1")
       .then((r) => r.json())
-      .then((d: { items: CollectionRow[] }) => setItems(d.items));
+      .then((d: { cards: DeckCard[]; nextPage: number }) => {
+        d.cards.forEach((c) => c.animeId != null && seen.current.add(c.animeId));
+        setCards(d.cards);
+        setPage(d.nextPage);
+        if (d.cards.length === 0) setNoMore(true);
+      })
+      .catch(() => setCards([]));
   }, []);
+
+  const fetchMore = useCallback(async () => {
+    if (loadingMore.current || noMore) return;
+    loadingMore.current = true;
+    try {
+      const r = await fetch(`/api/deck?page=${page}`);
+      const d = (await r.json()) as { cards: DeckCard[]; nextPage: number };
+      const discover = d.cards.filter((c) => c.kind === "discover");
+      if (discover.length === 0) setNoMore(true);
+      else {
+        appendCards(discover);
+        setPage(d.nextPage);
+      }
+    } catch {
+      /* keep whatever we have */
+    } finally {
+      loadingMore.current = false;
+    }
+  }, [page, noMore, appendCards]);
 
   const commit = useCallback(
     (status: Status, tier: Tier) => {
-      setItems((prev) => {
-        if (!prev) return prev;
-        const item = prev[i];
-        if (!item) return prev;
-        setHistory((h) => [...h, { id: item.id, status: item.status, tier: item.tier }]);
-        fetch(`/api/collection/${item.id}`, {
+      const card = cards?.[i];
+      if (!card) return;
+      const entry: HistoryEntry = { card };
+      history.current.push(entry);
+
+      if (card.kind === "collection" && card.itemId) {
+        fetch(`/api/collection/${card.itemId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status, tier }),
         }).catch(() => {});
-        return prev;
+      } else if (card.kind === "discover" && card.media) {
+        fetch("/api/deck", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ media: card.media, status, tier }),
+        })
+          .then((r) => r.json())
+          .then((d: { item?: { id: string } }) => {
+            if (d.item) entry.createdId = d.item.id;
+          })
+          .catch(() => {});
+      }
+
+      setI((n) => {
+        const next = n + 1;
+        if (cards && cards.length - next <= 5) fetchMore();
+        return next;
       });
-      setI((n) => n + 1);
     },
-    [i],
+    [cards, i, fetchMore],
   );
 
   function undo() {
     if (i === 0) return;
-    const last = history[history.length - 1];
-    setHistory((h) => h.slice(0, -1));
+    const entry = history.current.pop();
     setI((n) => n - 1);
-    if (last) {
-      fetch(`/api/collection/${last.id}`, {
+    if (!entry) return;
+    if (entry.card.kind === "collection" && entry.card.itemId) {
+      fetch(`/api/collection/${entry.card.itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "untriaged", tier: last.tier }),
+        body: JSON.stringify({ status: "untriaged", tier: entry.card.tier }),
       }).catch(() => {});
+    } else if (entry.card.kind === "discover" && entry.createdId) {
+      fetch(`/api/collection/${entry.createdId}`, { method: "DELETE" }).catch(() => {});
     }
   }
 
-  if (!items) return <div className="text-center label mt-20">loading deck…</div>;
+  if (!cards) return <div className="text-center label mt-20">loading deck…</div>;
 
-  if (items.length === 0 || i >= items.length) {
+  if (i >= cards.length) {
     return (
       <div className="panel p-10 text-center rise mt-8 max-w-lg mx-auto">
         <div
@@ -221,32 +292,32 @@ export default function SwipePage() {
         >
           <Check size={22} className="text-[var(--accent)]" strokeWidth={2.5} />
         </div>
-        <h1 className="display text-2xl mb-2">
-          {items.length === 0 ? "Nothing to triage" : "Deck cleared"}
-        </h1>
+        <h1 className="display text-2xl mb-2">All caught up</h1>
         <p className="text-[var(--muted)] text-sm mb-7">
-          {items.length === 0
-            ? "Import a list and untriaged shows land here to swipe."
-            : `You sorted ${items.length} shows. Go admire the empire.`}
+          You&apos;ve swiped through everything for now. Go admire the empire — or import a list to
+          add more.
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
           <Link href="/" className="btn btn-primary">See the empire</Link>
-          <Link href="/import" className="btn">Import more</Link>
+          <Link href="/import" className="btn">Import a list</Link>
         </div>
       </div>
     );
   }
 
-  const current = items[i];
-  const next = items[i + 1];
-  const remaining = items.length - i;
+  const current = cards[i];
+  const next = cards[i + 1];
+  const remaining = cards.length - i;
 
   return (
     <div className="flex flex-col items-center rise">
       <div className="w-full max-w-[340px] flex items-center justify-between mb-3">
         <div>
-          <div className="label">triage</div>
-          <div className="readout text-sm text-[var(--muted)]">{remaining} remaining</div>
+          <div className="label">{current.kind === "discover" ? "discover" : "triage"}</div>
+          <div className="readout text-sm text-[var(--muted)]">
+            {remaining}
+            {noMore ? "" : "+"} in deck
+          </div>
         </div>
         <button
           onClick={undo}
@@ -264,10 +335,9 @@ export default function SwipePage() {
             <img src={next.coverImage ?? ""} alt="" className="w-full h-full object-cover" />
           </div>
         )}
-        <Card key={current.id} item={current} onCommit={commit} />
+        <Card key={`${current.kind}-${current.animeId}-${current.itemId ?? "d"}`} card={current} onCommit={commit} />
       </div>
 
-      {/* direction legend */}
       <div className="grid grid-cols-2 gap-y-1 gap-x-8 label mb-3 w-full max-w-[340px]">
         <span>← dropped</span>
         <span className="text-right">watched →</span>

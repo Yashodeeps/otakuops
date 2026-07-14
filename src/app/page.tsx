@@ -26,12 +26,17 @@ function EmptyState() {
       <div className="label mb-4">no data // empire not initialized</div>
       <h1 className="display text-2xl md:text-3xl mb-3">Build your anime empire</h1>
       <p className="text-[var(--muted)] max-w-sm mx-auto mb-7 text-sm leading-relaxed">
-        Paste the list rotting in your notes app. OtakuOps parses it, matches every title to real
-        cover art, and hands you a deck to triage the whole backlog.
+        Two ways to start: swipe through popular anime and build your list as you go — or paste a
+        list you already keep somewhere and we&apos;ll parse it.
       </p>
-      <Link href="/import" className="btn btn-primary">
-        <ClipboardPaste size={15} strokeWidth={2} /> Import a list
-      </Link>
+      <div className="flex gap-3 justify-center flex-wrap">
+        <Link href="/swipe" className="btn btn-primary">
+          <GalleryHorizontalEnd size={15} strokeWidth={2} /> Start swiping
+        </Link>
+        <Link href="/import" className="btn">
+          <ClipboardPaste size={15} strokeWidth={2} /> Paste a list
+        </Link>
+      </div>
     </div>
   );
 }

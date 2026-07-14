@@ -10,4 +10,4 @@ export function xaiClient(): OpenAI {
   });
 }
 
-export const XAI_MODEL = process.env.XAI_MODEL ?? "grok-3";
+export const XAI_MODEL = process.env.XAI_MODEL ?? "grok-4.5";

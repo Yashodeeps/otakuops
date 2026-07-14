@@ -141,6 +141,30 @@ export async function searchBatch(
   return out;
 }
 
+/** Fetch popular anime for the discovery deck, excluding ids already in the
+ *  user's collection. Paginated so the deck can feel endless. */
+export async function fetchPopular(opts: {
+  excludeIds?: number[];
+  page?: number;
+  perPage?: number;
+}): Promise<AniListMedia[]> {
+  const { excludeIds = [], page = 1, perPage = 20 } = opts;
+  const query = `query ($page: Int, $perPage: Int, $exclude: [Int]) {
+    Page(page: $page, perPage: $perPage) {
+      media(sort: POPULARITY_DESC, type: ANIME, isAdult: false, id_not_in: $exclude) {
+        ${MEDIA_FIELDS}
+      }
+    }
+  }`;
+  const data = await gql<{ Page: { media: RawMedia[] } }>(query, {
+    page,
+    perPage,
+    // AniList caps id_not_in length; keep it sane (most-recent/most-relevant first)
+    exclude: excludeIds.slice(0, 100),
+  });
+  return (data.Page?.media ?? []).map(normalize);
+}
+
 /** Fetch fresh metadata (incl. next airing) for a set of AniList ids, batched. */
 export async function fetchByIds(ids: number[]): Promise<AniListMedia[]> {
   const out: AniListMedia[] = [];

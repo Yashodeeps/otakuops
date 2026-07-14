@@ -126,6 +126,25 @@ export async function importItems(userId: string, items: ImportItem[]): Promise<
   return count;
 }
 
+/** Add a single discovered (popular) anime to the collection and return the row.
+ *  Used by the swipe deck when you swipe a discovery card. */
+export async function addAnime(
+  userId: string,
+  media: AniListMedia,
+  status: Status,
+  tier: Tier,
+): Promise<CollectionRow> {
+  await upsertAnime(media);
+  const episodesWatched = episodesForStatus(status, media);
+  const row = await prisma.collectionItem.upsert({
+    where: { userId_animeId: { userId, animeId: media.id } },
+    create: { userId, animeId: media.id, status, tier, episodesWatched },
+    update: { status, tier, episodesWatched },
+    include: { anime: true },
+  });
+  return toRow(row);
+}
+
 type RowWithAnime = {
   id: string;
   animeId: number | null;
