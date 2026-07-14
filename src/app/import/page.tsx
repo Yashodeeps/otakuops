@@ -45,6 +45,9 @@ export default function ImportPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [importedCount, setImportedCount] = useState(0);
+  // When on: a ranked show with no explicit status is assumed watched (base
+  // season only). When off: it stays untriaged so you confirm it by swiping.
+  const [assumeWatched, setAssumeWatched] = useState(true);
 
   async function parse() {
     setError(null);
@@ -65,7 +68,12 @@ export default function ImportPage() {
           candidates: e.candidates,
           choice: e.candidates.length ? (e.bestId as Choice) : "manual",
           tier: e.parsed.tier,
-          status: e.parsed.status,
+          // ranked + no explicit status: assume watched (base season) if the
+          // switch is on, else leave untriaged to confirm by swiping.
+          status:
+            assumeWatched && e.parsed.tier !== "unranked" && e.parsed.status === "untriaged"
+              ? "watched"
+              : e.parsed.status,
           autoAccept: e.autoAccept,
         })),
       );
@@ -173,6 +181,36 @@ export default function ImportPage() {
             )}
             {error && <span className="text-[var(--tier-s)] text-sm">{error}</span>}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setAssumeWatched((v) => !v)}
+            className="flex items-start gap-2.5 text-left w-full p-3 rounded-lg border transition"
+            style={{
+              borderColor: assumeWatched ? "var(--accent)" : "var(--border-2)",
+              background: assumeWatched ? "var(--accent-dim)" : "transparent",
+            }}
+          >
+            <span
+              className="mt-0.5 shrink-0 w-4 h-4 rounded grid place-items-center border"
+              style={{
+                borderColor: assumeWatched ? "var(--accent)" : "var(--border-2)",
+                background: assumeWatched ? "var(--accent)" : "transparent",
+              }}
+            >
+              {assumeWatched && <Check size={11} strokeWidth={3} color="var(--accent-ink)" />}
+            </span>
+            <span className="text-sm leading-snug">
+              <span className="font-medium">I&apos;ve watched the shows in my tiers</span>
+              <span className="text-[var(--muted)]">
+                {" "}
+                — mark them watched (base season only, so hours stay conservative if your list is
+                behind on newer seasons). Turn off to leave ranked shows untriaged and confirm each
+                by swiping instead.
+              </span>
+            </span>
+          </button>
+
           <p className="label leading-relaxed">
             parsed by grok ai when your key is set (a local parser fills in otherwise) · the result
             shows which engine ran · art + episodes from anilist
