@@ -8,8 +8,13 @@ export const STATUSES = [
   "half_finished",
   "watchlist",
   "dropped",
+  "skipped", // dismissed in the swipe deck — hidden from the empire, reviewable
 ] as const;
 export type Status = (typeof STATUSES)[number];
+
+// Statuses shown in user-facing pickers/breakdowns (skipped is a swipe action,
+// not something you assign by hand or count in your empire).
+export const VISIBLE_STATUSES = STATUSES.filter((s) => s !== "skipped");
 
 export const TIERS = ["S", "A", "B", "C", "D", "E", "unranked"] as const;
 export type Tier = (typeof TIERS)[number];
@@ -26,6 +31,7 @@ export const STATUS_META: Record<Status, { label: string }> = {
   half_finished: { label: "Half-finished" },
   watchlist: { label: "Watchlist" },
   dropped: { label: "Dropped" },
+  skipped: { label: "Skipped" },
 };
 
 // Refined S–D ramp — the one place real color lives. Kept in sync with the

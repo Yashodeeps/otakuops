@@ -205,7 +205,9 @@ export async function getCollection(
   filter?: { status?: Status },
 ): Promise<CollectionRow[]> {
   const rows = await prisma.collectionItem.findMany({
-    where: { userId, ...(filter?.status ? { status: filter.status } : {}) },
+    // explicit status filter honored (incl. "skipped" for review); otherwise
+    // hide skipped so it never shows in the empire, tiers, stats, or companion.
+    where: filter?.status ? { userId, status: filter.status } : { userId, status: { not: "skipped" } },
     include: { anime: true },
     orderBy: [{ tier: "asc" }, { personalRank: "asc" }, { updatedAt: "desc" }],
   });

@@ -15,7 +15,8 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10) || 1);
-  return NextResponse.json(await getDeck(userId, page));
+  const mode = url.searchParams.get("mode") === "skipped" ? "skipped" : "normal";
+  return NextResponse.json(await getDeck(userId, page, mode));
 }
 
 // POST /api/deck  { media, status, tier }  -> add a swiped discovery card

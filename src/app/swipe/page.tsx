@@ -8,15 +8,15 @@ import {
   Trash2,
   Bookmark,
   Play,
-  Hourglass,
   Undo2,
   Star,
   Flame,
+  SkipForward,
+  RotateCcw,
   ArrowUp,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
-  SkipForward,
   type LucideIcon,
 } from "lucide-react";
 import { TIER_META, type Status, type Tier } from "@/lib/enums";
@@ -38,6 +38,7 @@ function Card({ card, onCommit }: { card: DeckCard; onCommit: (s: Status, t: Tie
   const y = useMotionValue(0);
   const rotate = useTransform(x, [-240, 240], [-12, 12]);
   const [tier, setTier] = useState<Tier>(card.tier);
+  const [showRank, setShowRank] = useState(false);
   const flung = useRef(false);
 
   const rightOp = useTransform(x, [40, 150], [0, 1]);
@@ -116,8 +117,8 @@ function Card({ card, onCommit }: { card: DeckCard; onCommit: (s: Status, t: Tie
             <Flame size={11} strokeWidth={2} /> popular
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 p-4 bg-black/80 backdrop-blur-md border-t border-white/10">
-          <div className="flex items-center gap-2 label mb-1.5 text-white/50">
+        <div className="absolute inset-x-0 bottom-0 p-3.5 bg-black/80 backdrop-blur-md border-t border-white/10">
+          <div className="flex items-center gap-2 label mb-1 text-white/50">
             {card.format && <span>{card.format}</span>}
             {card.episodes && <span>· {card.episodes} ep</span>}
             {card.seasonYear && <span>· {card.seasonYear}</span>}
@@ -127,35 +128,43 @@ function Card({ card, onCommit }: { card: DeckCard; onCommit: (s: Status, t: Tie
               </span>
             )}
           </div>
-          <h2 className="display text-xl md:text-2xl text-white leading-tight">{card.title}</h2>
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {card.genres.slice(0, 3).map((g) => (
-              <span
-                key={g}
-                className="text-[11px] px-2 py-0.5 rounded border text-white/70"
-                style={{ borderColor: "rgba(255,255,255,0.2)" }}
-              >
-                {g}
-              </span>
-            ))}
-          </div>
-          <div className="flex items-center gap-1.5 mt-3">
-            <span className="label text-white/40 mr-1">rank</span>
-            {(["S", "A", "B", "C", "D", "E"] as const).map((t) => (
+          <h2 className="display text-lg md:text-2xl text-white leading-tight line-clamp-2">
+            {card.title}
+          </h2>
+          {/* collapsible rank — declutters the card */}
+          <div className="mt-2.5">
+            {!showRank ? (
               <button
-                key={t}
-                onClick={() => setTier(t)}
-                className="readout w-7 h-7 rounded-md text-sm font-bold transition"
-                style={{
-                  background: tier === t ? TIER_META[t].color : "rgba(255,255,255,0.08)",
-                  color: tier === t ? "#0a0a0c" : "rgba(255,255,255,0.85)",
-                  outline: tier === t ? "2px solid rgba(255,255,255,0.9)" : "none",
-                  outlineOffset: -2,
-                }}
+                onClick={() => setShowRank(true)}
+                className="text-xs px-2.5 py-1 rounded-md border font-medium"
+                style={
+                  tier === "unranked"
+                    ? { borderColor: "rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.8)" }
+                    : { borderColor: TIER_META[tier].color, color: TIER_META[tier].color }
+                }
               >
-                {t}
+                {tier === "unranked" ? "+ Rank" : `Tier ${tier}`}
               </button>
-            ))}
+            ) : (
+              <div className="flex items-center gap-1.5">
+                {(["S", "A", "B", "C", "D", "E"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      setTier(t);
+                      setShowRank(false);
+                    }}
+                    className="readout w-7 h-7 rounded-md text-sm font-bold"
+                    style={{
+                      background: tier === t ? TIER_META[t].color : "rgba(255,255,255,0.1)",
+                      color: tier === t ? "#0a0a0c" : "#fff",
+                    }}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -180,67 +189,66 @@ function FlingBridge({ fling }: { fling: (status: Status, d: Dir) => void }) {
   return null;
 }
 
-type HistoryEntry = { card: DeckCard; createdId?: string; skipped?: boolean };
+type HistoryEntry = { card: DeckCard; createdId?: string; committed: Status };
 
 export default function SwipePage() {
+  const [mode, setMode] = useState<"normal" | "skipped">("normal");
   const [cards, setCards] = useState<DeckCard[] | null>(null);
   const [i, setI] = useState(0);
   const [page, setPage] = useState(1);
   const [noMore, setNoMore] = useState(false);
+  const [skippedCount, setSkippedCount] = useState(0);
   const history = useRef<HistoryEntry[]>([]);
   const loadingMore = useRef(false);
   const seen = useRef<Set<number>>(new Set());
 
-  const appendCards = useCallback((incoming: DeckCard[]) => {
-    setCards((prev) => {
-      const base = prev ?? [];
-      const fresh = incoming.filter((c) => {
-        if (c.animeId == null) return true;
-        if (seen.current.has(c.animeId)) return false;
-        seen.current.add(c.animeId);
-        return true;
-      });
-      return [...base, ...fresh];
-    });
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/deck?page=1")
+  const loadDeck = useCallback((m: "normal" | "skipped") => {
+    setCards(null);
+    setI(0);
+    setNoMore(false);
+    history.current = [];
+    seen.current = new Set();
+    fetch(`/api/deck?page=1&mode=${m}`)
       .then((r) => r.json())
-      .then((d: { cards: DeckCard[]; nextPage: number }) => {
+      .then((d: { cards: DeckCard[]; nextPage: number; skippedCount: number }) => {
         d.cards.forEach((c) => c.animeId != null && seen.current.add(c.animeId));
         setCards(d.cards);
         setPage(d.nextPage);
+        setSkippedCount(d.skippedCount);
         if (d.cards.length === 0) setNoMore(true);
       })
       .catch(() => setCards([]));
   }, []);
 
+  useEffect(() => {
+    loadDeck(mode);
+  }, [mode, loadDeck]);
+
   const fetchMore = useCallback(async () => {
-    if (loadingMore.current || noMore) return;
+    if (loadingMore.current || noMore || mode !== "normal") return;
     loadingMore.current = true;
     try {
-      const r = await fetch(`/api/deck?page=${page}`);
+      const r = await fetch(`/api/deck?page=${page}&mode=normal`);
       const d = (await r.json()) as { cards: DeckCard[]; nextPage: number };
-      const discover = d.cards.filter((c) => c.kind === "discover");
+      const discover = d.cards.filter((c) => c.kind === "discover" && c.animeId != null && !seen.current.has(c.animeId));
       if (discover.length === 0) setNoMore(true);
       else {
-        appendCards(discover);
+        discover.forEach((c) => c.animeId != null && seen.current.add(c.animeId));
+        setCards((prev) => [...(prev ?? []), ...discover]);
         setPage(d.nextPage);
       }
     } catch {
-      /* keep whatever we have */
+      /* keep what we have */
     } finally {
       loadingMore.current = false;
     }
-  }, [page, noMore, appendCards]);
+  }, [page, noMore, mode]);
 
   const commit = useCallback(
     (status: Status, tier: Tier) => {
       const card = cards?.[i];
       if (!card) return;
-      const entry: HistoryEntry = { card };
-      history.current.push(entry);
+      history.current.push({ card, committed: status });
 
       if (card.kind === "collection" && card.itemId) {
         fetch(`/api/collection/${card.itemId}`, {
@@ -249,6 +257,7 @@ export default function SwipePage() {
           body: JSON.stringify({ status, tier }),
         }).catch(() => {});
       } else if (card.kind === "discover" && card.media) {
+        const entry = history.current[history.current.length - 1];
         fetch("/api/deck", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -261,37 +270,31 @@ export default function SwipePage() {
           .catch(() => {});
       }
 
+      if (status === "skipped") setSkippedCount((c) => c + 1);
+      else if (mode === "skipped") setSkippedCount((c) => Math.max(0, c - 1));
+
       setI((n) => {
         const next = n + 1;
-        if (cards && cards.length - next <= 5) fetchMore();
+        if (mode === "normal" && cards && cards.length - next <= 5) fetchMore();
         return next;
       });
     },
-    [cards, i, fetchMore],
+    [cards, i, fetchMore, mode],
   );
-
-  // Skip: advance without touching the collection (decide later).
-  const skip = useCallback(() => {
-    const card = cards?.[i];
-    if (!card) return;
-    history.current.push({ card, skipped: true });
-    setI((n) => {
-      const next = n + 1;
-      if (cards && cards.length - next <= 5) fetchMore();
-      return next;
-    });
-  }, [cards, i, fetchMore]);
 
   function undo() {
     if (i === 0) return;
     const entry = history.current.pop();
     setI((n) => n - 1);
-    if (!entry || entry.skipped) return; // skip wrote nothing to revert
+    if (!entry) return;
+    if (entry.committed === "skipped") setSkippedCount((c) => Math.max(0, c - 1));
+    else if (mode === "skipped") setSkippedCount((c) => c + 1);
+
     if (entry.card.kind === "collection" && entry.card.itemId) {
       fetch(`/api/collection/${entry.card.itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "untriaged", tier: entry.card.tier }),
+        body: JSON.stringify({ status: entry.card.status, tier: entry.card.tier }),
       }).catch(() => {});
     } else if (entry.card.kind === "discover" && entry.createdId) {
       fetch(`/api/collection/${entry.createdId}`, { method: "DELETE" }).catch(() => {});
@@ -301,6 +304,7 @@ export default function SwipePage() {
   if (!cards) return <div className="text-center label mt-20">loading deck…</div>;
 
   if (i >= cards.length) {
+    const reviewing = mode === "skipped";
     return (
       <div className="panel p-10 text-center rise mt-8 max-w-lg mx-auto">
         <div
@@ -309,14 +313,28 @@ export default function SwipePage() {
         >
           <Check size={22} className="text-[var(--accent)]" strokeWidth={2.5} />
         </div>
-        <h1 className="display text-2xl mb-2">All caught up</h1>
+        <h1 className="display text-2xl mb-2">{reviewing ? "Skipped cleared" : "All caught up"}</h1>
         <p className="text-[var(--muted)] text-sm mb-7">
-          You&apos;ve swiped through everything for now. Go admire the empire — or import a list to
-          add more.
+          {reviewing
+            ? "That's the skipped pile handled."
+            : "You've swiped through everything for now."}
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
-          <Link href="/" className="btn btn-primary">See the empire</Link>
-          <Link href="/import" className="btn">Import a list</Link>
+          {reviewing ? (
+            <button className="btn btn-primary" onClick={() => setMode("normal")}>
+              Back to discovery
+            </button>
+          ) : (
+            <>
+              <Link href="/" className="btn btn-primary">See the empire</Link>
+              {skippedCount > 0 && (
+                <button className="btn" onClick={() => setMode("skipped")}>
+                  <RotateCcw size={15} strokeWidth={2} /> Review {skippedCount} skipped
+                </button>
+              )}
+              <Link href="/import" className="btn">Import a list</Link>
+            </>
+          )}
         </div>
       </div>
     );
@@ -330,22 +348,40 @@ export default function SwipePage() {
     <div className="flex flex-col items-center rise">
       <div className="w-full max-w-[340px] flex items-center justify-between mb-3">
         <div>
-          <div className="label">{current.kind === "discover" ? "discover" : "triage"}</div>
+          <div className="label">{mode === "skipped" ? "reviewing skipped" : current.kind === "discover" ? "discover" : "triage"}</div>
           <div className="readout text-sm text-[var(--muted)]">
             {remaining}
-            {noMore ? "" : "+"} in deck
+            {noMore || mode === "skipped" ? "" : "+"} left
           </div>
         </div>
-        <button
-          onClick={undo}
-          disabled={i === 0}
-          className="btn btn-ghost text-sm text-[var(--muted)] disabled:opacity-30"
-        >
-          <Undo2 size={15} /> Undo
-        </button>
+        <div className="flex items-center gap-1">
+          {mode === "normal" && (
+            <button
+              className="btn btn-ghost text-sm text-[var(--muted)]"
+              onClick={() => commit("skipped", current.tier)}
+            >
+              <SkipForward size={15} strokeWidth={2} /> Skip
+            </button>
+          )}
+          {mode === "skipped" && (
+            <button className="btn btn-ghost text-sm text-[var(--muted)]" onClick={() => setMode("normal")}>
+              Exit
+            </button>
+          )}
+          <button
+            onClick={undo}
+            disabled={i === 0}
+            className="btn btn-ghost text-sm text-[var(--muted)] disabled:opacity-30"
+          >
+            <Undo2 size={15} /> Undo
+          </button>
+        </div>
       </div>
 
-      <div className="relative w-full max-w-[340px] aspect-[2/3] mb-4">
+      <div
+        className="relative aspect-[2/3] mb-4 mx-auto max-w-full"
+        style={{ height: "min(50vh, 460px)" }}
+      >
         {next && (
           <div className="absolute inset-0 scale-[0.94] translate-y-2 rounded-xl overflow-hidden border border-[var(--border)] opacity-50">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -355,8 +391,8 @@ export default function SwipePage() {
         <Card key={`${current.kind}-${current.animeId}-${current.itemId ?? "d"}`} card={current} onCommit={commit} />
       </div>
 
-      {/* direction compass — big, color-coded, and tappable (swipe or tap) */}
-      <div className="w-full max-w-[340px] space-y-2 mb-3">
+      {/* compact direction compass — swipe or tap */}
+      <div className="w-full max-w-[300px] space-y-1.5">
         <div className="flex justify-center">
           <DirCue color="#5aa9e6" arrow="up" Icon={Bookmark} label="Watchlist" onClick={() => activeFling?.("watchlist", "up")} />
         </div>
@@ -367,20 +403,6 @@ export default function SwipePage() {
         <div className="flex justify-center">
           <DirCue color="#ffb454" arrow="down" Icon={Play} label="Watching" onClick={() => activeFling?.("watching", "down")} />
         </div>
-      </div>
-
-      {/* non-directional actions */}
-      <div className="flex items-center gap-2 justify-center">
-        <button
-          className="btn text-sm"
-          style={{ color: "#c9a4ff" }}
-          onClick={() => commit("half_finished", current.tier)}
-        >
-          <Hourglass size={15} strokeWidth={2} /> Half-finished
-        </button>
-        <button className="btn text-sm text-[var(--muted)]" onClick={skip}>
-          <SkipForward size={15} strokeWidth={2} /> Skip
-        </button>
       </div>
     </div>
   );
@@ -403,11 +425,11 @@ function DirCue({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border text-sm font-semibold transition active:scale-95"
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition active:scale-95"
       style={{ borderColor: color, color, background: `${color}14` }}
     >
-      <Arrow size={16} strokeWidth={2.5} />
-      <Icon size={15} strokeWidth={2} />
+      <Arrow size={14} strokeWidth={2.5} />
+      <Icon size={13} strokeWidth={2} />
       {label}
     </button>
   );

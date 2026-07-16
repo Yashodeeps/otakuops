@@ -5,6 +5,7 @@ import {
   Bookmark,
   Trash2,
   CircleDashed,
+  SkipForward,
   type LucideIcon,
 } from "lucide-react";
 import type { Status } from "@/lib/enums";
@@ -16,6 +17,7 @@ export const STATUS_ICON: Record<Status, LucideIcon> = {
   half_finished: Hourglass,
   watchlist: Bookmark,
   dropped: Trash2,
+  skipped: SkipForward,
 };
 
 export function tierColor(tier: string): string {

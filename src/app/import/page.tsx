@@ -10,7 +10,7 @@ import {
   GalleryHorizontalEnd,
   Loader2,
 } from "lucide-react";
-import { STATUSES, TIERS, STATUS_META, TIER_META, type Status, type Tier } from "@/lib/enums";
+import { VISIBLE_STATUSES, TIERS, STATUS_META, TIER_META, type Status, type Tier } from "@/lib/enums";
 import type { MatchedEntry, MatchCandidate } from "@/lib/match";
 
 type Choice = number | "manual" | "skip";
@@ -289,7 +289,7 @@ export default function ImportPage() {
                           value={r.status}
                           onChange={(e) => setRow(i, { status: e.target.value as Status })}
                         >
-                          {STATUSES.map((s) => (
+                          {VISIBLE_STATUSES.map((s) => (
                             <option key={s} value={s}>
                               {STATUS_META[s].label}
                             </option>

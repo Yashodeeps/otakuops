@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { getStats, getCollection } from "@/lib/collection";
 import { formatHours } from "@/lib/hours";
-import { STATUS_META, STATUSES, type Status } from "@/lib/enums";
+import { STATUS_META, VISIBLE_STATUSES, type Status } from "@/lib/enums";
 import { TierPill } from "@/components/badges";
 import { STATUS_ICON } from "@/components/statusIcon";
 import { ShareToX } from "@/components/ShareToX";
@@ -70,7 +70,7 @@ export default async function DashboardPage() {
   if (stats.total === 0) return <EmptyState />;
 
   const untriaged = stats.byStatus["untriaged"] ?? 0;
-  const maxStatus = Math.max(1, ...STATUSES.map((s) => stats.byStatus[s] ?? 0));
+  const maxStatus = Math.max(1, ...VISIBLE_STATUSES.map((s) => stats.byStatus[s] ?? 0));
   const topShows = collection
     .filter((c) => c.tier !== "unranked" && c.coverImage)
     .sort((a, b) => "SABCDE".indexOf(a.tier) - "SABCDE".indexOf(b.tier))
@@ -131,7 +131,7 @@ export default async function DashboardPage() {
         <div className="panel p-5">
           <div className="label mb-4">by status</div>
           <div className="space-y-2.5">
-            {STATUSES.map((s) => {
+            {VISIBLE_STATUSES.map((s) => {
               const n = stats.byStatus[s] ?? 0;
               const Icon = STATUS_ICON[s as Status];
               return (
