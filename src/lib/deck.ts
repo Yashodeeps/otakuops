@@ -79,6 +79,7 @@ export async function getDeck(
     select: { animeId: true },
   });
   const ownedIds = owned.map((o) => o.animeId as number);
+  const ownedSet = new Set(ownedIds);
 
   const cards: DeckCard[] = [];
 
@@ -88,9 +89,10 @@ export async function getDeck(
     cards.push(...untriaged.map(rowToCard));
   }
 
-  // then popular discovery
-  const popular = await fetchPopular({ excludeIds: ownedIds, page, perPage: 20 });
+  // then popular discovery — perPage padded since we hard-filter owned below
+  const popular = await fetchPopular({ excludeIds: ownedIds, page, perPage: 30 });
   for (const m of popular) {
+    if (ownedSet.has(m.id)) continue; // never surface anything already in the collection
     cards.push({
       kind: "discover",
       itemId: null,

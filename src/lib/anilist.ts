@@ -159,8 +159,9 @@ export async function fetchPopular(opts: {
   const data = await gql<{ Page: { media: RawMedia[] } }>(query, {
     page,
     perPage,
-    // AniList caps id_not_in length; keep it sane (most-recent/most-relevant first)
-    exclude: excludeIds.slice(0, 100),
+    // AniList accepts large exclusion lists; the deck layer also filters owned
+    // ids server-side as a hard guarantee, so this cap is just a sanity bound.
+    exclude: excludeIds.slice(0, 500),
   });
   return (data.Page?.media ?? []).map(normalize);
 }
