@@ -12,10 +12,11 @@ import {
 } from "lucide-react";
 import { getStats, getCollection } from "@/lib/collection";
 import { formatHours } from "@/lib/hours";
+import { deriveCardStats } from "@/lib/og";
 import { STATUS_META, VISIBLE_STATUSES, type Status } from "@/lib/enums";
 import { TierPill } from "@/components/badges";
 import { STATUS_ICON } from "@/components/statusIcon";
-import { ShareToX } from "@/components/ShareToX";
+import { ShareCards } from "@/components/ShareCards";
 import { SetupNeeded } from "@/components/SetupNeeded";
 
 export const dynamic = "force-dynamic";
@@ -84,11 +85,7 @@ export default async function DashboardPage() {
           <h1 className="display text-2xl md:text-3xl">The Empire</h1>
         </div>
         <div className="flex items-center gap-2">
-          <ShareToX
-            hours={formatHours(stats.totalHours)}
-            watched={stats.watchedCount}
-            total={stats.total}
-          />
+          <ShareCards stats={deriveCardStats(stats)} />
           {untriaged > 0 && (
             <Link href="/swipe" className="btn btn-primary text-sm">
               <GalleryHorizontalEnd size={15} strokeWidth={2} /> Triage {untriaged}
