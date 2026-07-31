@@ -105,10 +105,10 @@ export const DEMO_STATS: CardStats = {
   ],
 };
 
-// The mascot is user-supplied art (see public/mascot/README.md). We scan for a
-// handful of names/formats and return a data URI Satori can embed, or null so
-// the card falls back to its designed empty-slot treatment. PNG/JPG decode most
-// reliably in Satori; WebP is a last resort.
+// The mascot is user-supplied art (see "Mascot art for the share cards" in
+// README.md). We scan for a handful of names/formats and return a data URI
+// Satori can embed, or null so the card falls back to its designed empty-slot
+// treatment. PNG/JPG decode most reliably in Satori; WebP is a last resort.
 const MASCOT_CANDIDATES = [
   "momo.png",
   "momo.jpg",
