@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  /* ink surfaces */
-  --bg: #0a0a0c;
-  --surface: #101013;
-  --surface-2: #16161b;
-  --elevate: #1c1c22;
-  --border: #212127;
-  --border-2: #2c2c34;
+  /* ink surfaces — subtle near-neutral dark, a hair of warmth */
+  --bg: #0a0a0b;
+  --surface: #141316;
+  --surface-2: #1b191d;
+  --elevate: #221f25;
+  --border: #242127;
+  --border-2: #332e37;
 
   /* type */
   --text: #f3f3f4;
-  --muted: #9a9aa4;
-  --faint: #62626c;
+  --muted: #a29aa0;
+  --faint: #6a636c;
 
-  /* single accent — cool teal, the only non-tier hue */
-  --accent: #38d9c0;
-  --accent-hover: #55e6d0;
-  --accent-dim: rgba(56, 217, 192, 0.12);
-  --accent-ink: #04211c;
+  /* single accent — sakura pink, the only non-tier hue (flat, no gradients) */
+  --accent: #ff4d8d;
+  --accent-hover: #ff6ba1;
+  --accent-dim: rgba(255, 77, 141, 0.13);
+  --accent-ink: #2a0714;
 
   /* tier ramp — the one place color lives */
   --tier-s: #ff5d5d;

@@ -3,6 +3,7 @@ import { DM_Sans, Geist_Mono, Bricolage_Grotesque } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { NavBar } from "@/components/NavBar";
+import { StickerField } from "@/components/StickerField";
 
 const sans = DM_Sans({ variable: "--font-sans", subsets: ["latin"] });
 const mono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"] });
@@ -20,26 +21,33 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0c",
+  themeColor: "#0a0a0b",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
 };
 
-// Theme Clerk's UI to match the ops-console palette (no @clerk/themes dep needed).
+// Theme Clerk's UI to match the sakura palette (no @clerk/themes dep needed).
 const clerkAppearance = {
   variables: {
-    colorPrimary: "#38d9c0",
-    colorBackground: "#101013",
+    colorPrimary: "#ff4d8d",
+    colorBackground: "#141316",
     colorText: "#f3f3f4",
-    colorTextSecondary: "#c2c2cc",
-    colorInputBackground: "#16161b",
+    colorTextSecondary: "#b8b0b6",
+    colorInputBackground: "#1b191d",
     colorInputText: "#f3f3f4",
     colorNeutral: "#f3f3f4",
     borderRadius: "10px",
   },
   elements: {
-    card: { border: "1px solid #212127" },
+    // Our pages render their own branded header, so hide Clerk's duplicate.
+    header: { display: "none" },
+    // Make the card read as a distinct panel on the near-black background.
+    card: { border: "1px solid #332e37", boxShadow: "none", backgroundColor: "#141316" },
+    socialButtonsBlockButton: { borderColor: "#332e37" },
+    dividerLine: { backgroundColor: "#242127" },
+    footer: { background: "transparent" },
+    footerActionText: { color: "#a29aa0" },
   },
 };
 
@@ -51,8 +59,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         className={`${sans.variable} ${mono.variable} ${display.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col">
+          <StickerField />
           <NavBar />
-          <main className="flex-1 w-full max-w-5xl mx-auto px-4 md:px-6 pb-28 pt-5 md:pt-8">
+          <main className="relative z-10 flex-1 w-full max-w-5xl mx-auto px-4 md:px-6 pb-28 pt-5 md:pt-8">
             {children}
           </main>
         </body>

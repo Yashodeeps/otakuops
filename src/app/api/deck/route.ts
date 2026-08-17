@@ -4,6 +4,7 @@ import { getDeck } from "@/lib/deck";
 import { addAnime } from "@/lib/collection";
 import { isStatus, isTier, type Status, type Tier } from "@/lib/enums";
 import type { AniListMedia } from "@/lib/anilist";
+import { enforceLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -33,6 +34,9 @@ export async function POST(req: Request) {
   if (!isStatus(body.status ?? "") || !isTier(body.tier ?? "")) {
     return NextResponse.json({ error: "bad status/tier" }, { status: 400 });
   }
+
+  const limited = await enforceLimit(userId, "mutation");
+  if (limited) return limited;
 
   const item = await addAnime(userId, body.media, body.status as Status, body.tier as Tier);
   return NextResponse.json({ item });

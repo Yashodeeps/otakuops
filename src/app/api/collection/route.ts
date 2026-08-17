@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getCollection, importItems, type ImportItem } from "@/lib/collection";
 import { isStatus } from "@/lib/enums";
+import { enforceLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,10 @@ export async function POST(req: Request) {
   if (!Array.isArray(body.items) || body.items.length === 0) {
     return NextResponse.json({ error: "items required" }, { status: 400 });
   }
+
+  const limited = await enforceLimit(userId, "mutation");
+  if (limited) return limited;
+
   const count = await importItems(userId, body.items);
   return NextResponse.json({ imported: count });
 }
