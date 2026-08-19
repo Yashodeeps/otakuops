@@ -61,3 +61,16 @@ model CollectionItem {
   @@unique([userId, animeId])
   @@index([userId, status])
 }
+
+// Per-user daily usage counters backing the free-tier rate limits
+// (src/lib/rateLimit.ts). One row per (user, UTC day, action); count increments
+// per metered request. Rows just accumulate — harmless and tiny; prune with a
+// cron later if it ever matters.
+model UsageCounter {
+  userId String
+  day    String // UTC "YYYY-MM-DD"
+  action String // "ask" | "import" | "mutation"
+  count  Int    @default(0)
+
+  @@id([userId, day, action])
+}

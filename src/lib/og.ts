@@ -11,17 +11,17 @@ import type { EmpireStats } from "./collection";
 // Palette mirrors the --* CSS variables in globals.css. Satori can't read CSS
 // variables, so the card renderer needs the raw hexes.
 export const OG = {
-  bg: "#0a0a0c",
-  surface: "#101013",
-  surface2: "#16161b",
-  border: "#212127",
-  border2: "#2c2c34",
+  bg: "#0a0a0b",
+  surface: "#141316",
+  surface2: "#1b191d",
+  border: "#242127",
+  border2: "#332e37",
   text: "#f3f3f4",
-  muted: "#9a9aa4",
-  faint: "#62626c",
-  accent: "#38d9c0",
-  accentHover: "#55e6d0",
-  accentInk: "#04211c",
+  muted: "#a29aa0",
+  faint: "#6a636c",
+  accent: "#ff4d8d",
+  accentHover: "#ff6ba1",
+  accentInk: "#2a0714",
   tier: {
     S: "#ff5d5d",
     A: "#ff9f45",

@@ -159,6 +159,23 @@ All routes are auth-gated: each reads `auth()` for the `userId` and scopes its q
   mascot into the framed portrait slot. Client UI is `src/components/ShareCards.tsx` (copy to
   clipboard + open the X composer prefilled; download is the fallback).
 
+## Free-tier limits
+
+To keep a public deploy from running up xAI cost or hammering AniList, each signed-in
+user gets a **generous daily quota** (per UTC day), enforced server-side in
+`src/lib/rateLimit.ts` via a Postgres counter (`UsageCounter` table — no Redis):
+
+| Action                      | Limit / day | Why it's capped                     |
+| --------------------------- | ----------- | ----------------------------------- |
+| **Ask** (AI companion)      | 100         | each question is an xAI call        |
+| **Import** a list (`parse`) | 50          | parse + batched AniList search      |
+| **Writes** (swipe/edit)     | 3000        | anti-abuse ceiling; no human hits it |
+
+Over the cap returns HTTP **429** with a `Retry-After` header and a clear message
+(surfaced in the Ask and Import UIs). Cheap reads (deck/stats/feed) are unmetered.
+Adjust the numbers in `LIMITS` in `src/lib/rateLimit.ts`. Requires `pnpm db:push`
+after pulling (adds the `UsageCounter` table).
+
 ## Mascot art for the share cards
 
 Share cards have a framed portrait slot for user-supplied mascot art. Drop a **portrait**

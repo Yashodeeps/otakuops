@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { parseAnime } from "@/lib/parseAnime";
 import { matchEntries } from "@/lib/match";
+import { enforceLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,6 +17,9 @@ export async function POST(req: Request) {
   if (!text || typeof text !== "string" || !text.trim()) {
     return NextResponse.json({ error: "text required" }, { status: 400 });
   }
+
+  const limited = await enforceLimit(userId, "import");
+  if (limited) return limited;
 
   try {
     const { entries, engine } = await parseAnime(text);

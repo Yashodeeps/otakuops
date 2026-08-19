@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { xaiClient, XAI_MODEL } from "@/lib/xai";
 import { getCollection } from "@/lib/collection";
+import { enforceLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -22,6 +23,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "question required" }, { status: 400 });
   }
 
+  const limited = await enforceLimit(userId, "ask");
+  if (limited) return limited;
+
   const rows = await getCollection(userId);
   const context =
     rows
@@ -33,20 +37,33 @@ export async function POST(req: Request) {
       })
       .join("\n") || "(collection is empty)";
 
-  const client = xaiClient();
-  const completion = await client.chat.completions.create({
-    model: XAI_MODEL,
-    max_tokens: 1500,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are the user's personal anime companion. You know their whole collection: each title with their watch status (watched/watching/half_finished/watchlist/dropped/untriaged) and their S/A/B/C/D tier. Answer their question using ONLY shows in their collection unless they ask for outside recommendations. Be concise, specific, and fun. Give a direct answer first, then a short reason. No preamble.",
-      },
-      { role: "user", content: `My anime collection:\n${context}\n\nQuestion: ${question}` },
-    ],
-  });
+  try {
+    const client = xaiClient();
+    const completion = await client.chat.completions.create({
+      model: XAI_MODEL,
+      max_tokens: 1500,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are the user's personal anime companion. You know their whole collection: each title with their watch status (watched/watching/half_finished/watchlist/dropped/untriaged) and their S/A/B/C/D tier. Answer their question using ONLY shows in their collection unless they ask for outside recommendations. Be concise, specific, and fun. Give a direct answer first, then a short reason. No preamble.",
+        },
+        { role: "user", content: `My anime collection:\n${context}\n\nQuestion: ${question}` },
+      ],
+    });
 
-  const answer = completion.choices[0]?.message.content?.trim() ?? "";
-  return NextResponse.json({ answer });
+    const answer = completion.choices[0]?.message.content?.trim() ?? "";
+    return NextResponse.json({ answer });
+  } catch (err) {
+    // Surface the real upstream reason (bad model id, invalid key, rate limit)
+    // instead of a bare 500 that the client can only show as "Request failed".
+    console.error("ask route xai error:", err);
+    const detail = err instanceof Error ? err.message : "the AI request failed";
+    return NextResponse.json(
+      {
+        error: `Companion request failed for model "${XAI_MODEL}": ${detail}. If this persists, set XAI_MODEL to a model your xAI account can access.`,
+      },
+      { status: 502 },
+    );
+  }
 }

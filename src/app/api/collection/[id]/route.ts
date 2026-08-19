@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { updateItem, deleteItem, type ItemUpdate } from "@/lib/collection";
 import { isStatus, isTier } from "@/lib/enums";
+import { enforceLimit } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const limited = await enforceLimit(userId, "mutation");
+  if (limited) return limited;
 
   const { id } = await params;
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
@@ -38,6 +42,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const limited = await enforceLimit(userId, "mutation");
+  if (limited) return limited;
 
   const { id } = await params;
   await deleteItem(userId, id);
