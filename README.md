@@ -203,3 +203,6 @@ That's it — reload a card. No code change, no restart in production.
 ---
 
 Made with Next.js, AniList, and too many hours of anime.
+
+<!-- workflow test: fake email notifications (no functional change) -->
+
