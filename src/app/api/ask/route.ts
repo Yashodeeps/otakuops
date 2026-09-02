@@ -18,10 +18,25 @@ export async function POST(req: Request) {
       { status: 501 },
     );
   }
-  const { question } = (await req.json().catch(() => ({}))) as { question?: string };
+  const { question, history } = (await req.json().catch(() => ({}))) as {
+    question?: string;
+    history?: { q?: string; a?: string }[];
+  };
   if (!question?.trim()) {
     return NextResponse.json({ error: "question required" }, { status: 400 });
   }
+  // Last few turns only — enough for follow-ups ("why?", "what about the other one?")
+  // without re-sending the whole conversation on every ask.
+  const prior = (Array.isArray(history) ? history : [])
+    .slice(-6)
+    .flatMap((t) =>
+      typeof t?.q === "string" && typeof t?.a === "string"
+        ? ([
+            { role: "user" as const, content: t.q.slice(0, 2000) },
+            { role: "assistant" as const, content: t.a.slice(0, 4000) },
+          ])
+        : [],
+    );
 
   const limited = await enforceLimit(userId, "ask");
   if (limited) return limited;
@@ -46,9 +61,11 @@ export async function POST(req: Request) {
         {
           role: "system",
           content:
-            "You are the user's personal anime companion. You know their whole collection: each title with their watch status (watched/watching/half_finished/watchlist/dropped/untriaged) and their S/A/B/C/D tier. Answer their question using ONLY shows in their collection unless they ask for outside recommendations. Be concise, specific, and fun. Give a direct answer first, then a short reason. No preamble.",
+            "You are the user's personal anime companion. You know their whole collection: each title with their watch status (watched/watching/half_finished/watchlist/dropped/untriaged) and their S/A/B/C/D tier. Answer their question using ONLY shows in their collection unless they ask for outside recommendations. Be concise, specific, and fun. Give a direct answer first, then a short reason. No preamble. Reply in plain text — no markdown, no asterisks or headers; use plain '- ' for lists." +
+            `\n\nThe user's anime collection:\n${context}`,
         },
-        { role: "user", content: `My anime collection:\n${context}\n\nQuestion: ${question}` },
+        ...prior,
+        { role: "user", content: question },
       ],
     });
 
