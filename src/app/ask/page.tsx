@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, ArrowUp, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Sparkles, ArrowUp, Loader2, RotateCw } from "lucide-react";
 
 const SUGGESTIONS = [
   "What should I watch next from my watchlist?",
@@ -16,17 +16,28 @@ export default function AskPage() {
   const [q, setQ] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
+  const lastTurnRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  async function ask(question: string) {
+  // Pin the newest question near the top on ask (not on every answer edit,
+  // or a long answer would drag the view past its own start).
+  useEffect(() => {
+    lastTurnRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [turns.length]);
+
+  async function ask(question: string, replaceLast = false) {
     if (!question.trim() || busy) return;
     setBusy(true);
     setQ("");
-    setTurns((t) => [...t, { q: question, a: null }]);
+    const history = (replaceLast ? turns.slice(0, -1) : turns)
+      .filter((t) => t.a)
+      .map((t) => ({ q: t.q, a: t.a as string }));
+    setTurns((t) => [...(replaceLast ? t.slice(0, -1) : t), { q: question, a: null }]);
     try {
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question, history }),
       });
       const data = await res.json();
       setTurns((t) =>
@@ -40,6 +51,7 @@ export default function AskPage() {
       setTurns((t) => t.map((turn, idx) => (idx === t.length - 1 ? { ...turn, error: "Request failed" } : turn)));
     } finally {
       setBusy(false);
+      inputRef.current?.focus();
     }
   }
 
@@ -71,13 +83,26 @@ export default function AskPage() {
 
       <div className="space-y-3">
         {turns.map((t, i) => (
-          <div key={i} className="space-y-2">
+          <div
+            key={i}
+            ref={i === turns.length - 1 ? lastTurnRef : undefined}
+            className="space-y-2 scroll-mt-20"
+          >
             <div className="flex justify-end">
               <span className="panel-2 px-3 py-2 text-sm max-w-[80%]">{t.q}</span>
             </div>
             <div className="panel p-3.5 text-sm whitespace-pre-wrap leading-relaxed">
               {t.a ?? (t.error ? (
-                <span className="text-[var(--tier-s)]">{t.error}</span>
+                <div className="space-y-2">
+                  <span className="text-[var(--tier-s)]">{t.error}</span>
+                  <button
+                    className="btn btn-ghost !py-1 !px-2 text-xs flex"
+                    onClick={() => ask(t.q, true)}
+                    disabled={busy}
+                  >
+                    <RotateCw size={12} /> Retry
+                  </button>
+                </div>
               ) : (
                 <span className="flex items-center gap-2 text-[var(--faint)]">
                   <Loader2 size={14} className="animate-spin" /> thinking
@@ -89,18 +114,19 @@ export default function AskPage() {
       </div>
 
       <form
-        className="flex gap-2 sticky bottom-20 md:bottom-4"
+        className="sticky bottom-14 md:bottom-0 z-10 flex gap-2 bg-[var(--bg)] py-3"
         onSubmit={(e) => {
           e.preventDefault();
           ask(q);
         }}
       >
         <input
+          ref={inputRef}
           className="input"
           placeholder="Ask about your anime empire…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          disabled={busy}
+          enterKeyHint="send"
         />
         <button className="btn btn-primary px-3" disabled={busy || !q.trim()} aria-label="Ask">
           {busy ? <Loader2 size={16} className="animate-spin" /> : <ArrowUp size={16} strokeWidth={2.5} />}
