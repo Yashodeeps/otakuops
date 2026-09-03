@@ -7,15 +7,16 @@
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 
-// Fixed slots in the page gutters. top/left are % of the viewport; negative/large
-// left values let stickers peek in from the edges. Opacity is high on purpose so
-// they read as real stickers, not faint watermarks.
-const SLOTS: { top: string; left: string; size: number; rot: number; op: number }[] = [
-  { top: "3%", left: "82%", size: 155, rot: 6, op: 0.85 },
-  { top: "27%", left: "-3%", size: 150, rot: -8, op: 0.8 },
-  { top: "52%", left: "87%", size: 170, rot: 7, op: 0.8 },
-  { top: "74%", left: "-2%", size: 145, rot: -6, op: 0.85 },
-  { top: "84%", left: "80%", size: 150, rot: -10, op: 0.8 },
+// Fixed slots in the page gutters. top/right are % of the viewport; negative/large
+// right values let stickers peek in from the edges. Anchoring from the right mirrors
+// the whole field: a slot that used to sit at left 82% now sits at right 82%.
+// Opacity is high on purpose so they read as real stickers, not faint watermarks.
+const SLOTS: { top: string; right: string; size: number; rot: number; op: number }[] = [
+  { top: "3%", right: "82%", size: 155, rot: 6, op: 0.85 },
+  { top: "27%", right: "-3%", size: 150, rot: -8, op: 0.8 },
+  { top: "52%", right: "87%", size: 170, rot: 7, op: 0.8 },
+  { top: "74%", right: "-2%", size: 145, rot: -6, op: 0.85 },
+  { top: "84%", right: "80%", size: 150, rot: -10, op: 0.8 },
 ];
 
 // Prefer public/stickers/, then public/mascot/ — the same runtime dir read the
@@ -48,7 +49,7 @@ export async function StickerField() {
           style={{
             position: "absolute",
             top: s.top,
-            left: s.left,
+            right: s.right,
             width: s.size,
             height: "auto",
             opacity: s.op,
