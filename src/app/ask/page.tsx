@@ -6,7 +6,7 @@ import { Sparkles, ArrowUp, Loader2, RotateCw } from "lucide-react";
 const SUGGESTIONS = [
   "What should I watch next from my watchlist?",
   "Build me a weekend binge from my S and A tiers.",
-  "My S-tier is all shonen — recommend something different I already have.",
+  "My S-tier is all shonen - recommend something different I already have.",
   "Which half-finished shows are worth finishing?",
 ];
 
@@ -63,7 +63,7 @@ export default function AskPage() {
         </div>
         <h1 className="display text-2xl md:text-3xl">Ask your list</h1>
         <p className="text-[var(--muted)] text-sm mt-1.5">
-          Knows your whole collection — statuses, tiers, taste.
+          Knows your whole collection - statuses, tiers, taste.
         </p>
       </div>
 

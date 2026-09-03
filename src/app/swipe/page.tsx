@@ -131,7 +131,7 @@ function Card({ card, onCommit }: { card: DeckCard; onCommit: (s: Status, t: Tie
           <h2 className="display text-lg md:text-2xl text-white leading-tight line-clamp-2">
             {card.title}
           </h2>
-          {/* collapsible rank — declutters the card */}
+          {/* collapsible rank - declutters the card */}
           <div className="mt-2.5">
             {!showRank ? (
               <button
@@ -391,7 +391,7 @@ export default function SwipePage() {
         <Card key={`${current.kind}-${current.animeId}-${current.itemId ?? "d"}`} card={current} onCommit={commit} />
       </div>
 
-      {/* compact direction compass — swipe or tap */}
+      {/* compact direction compass - swipe or tap */}
       <div className="w-full max-w-[300px] space-y-1.5">
         <div className="flex justify-center">
           <DirCue color="#5aa9e6" arrow="up" Icon={Bookmark} label="Watchlist" onClick={() => activeFling?.("watchlist", "up")} />

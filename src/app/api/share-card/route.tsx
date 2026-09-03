@@ -4,7 +4,7 @@
 // Signed-in requests render the caller's real empire; signed-out requests render
 // DEMO_STATS so the URL is always a valid image (handy as a generic OG image and
 // for previewing without a session). Satori only supports flexbox + a CSS subset,
-// so every container sets display:flex and we avoid grid/custom fonts entirely —
+// so every container sets display:flex and we avoid grid/custom fonts entirely -
 // these images must always render, everywhere they're pasted.
 import { ImageResponse } from "next/og";
 import { auth } from "@clerk/nextjs/server";
@@ -51,7 +51,7 @@ export async function GET(req: Request) {
 
   return new ImageResponse(<Card variant={variant} s={s} mascot={mascot} />, {
     ...SIZE,
-    // Per-user stats — never let a browser cache one user's card for another,
+    // Per-user stats - never let a browser cache one user's card for another,
     // and keep in-app previews fresh as the empire changes.
     headers: { "cache-control": "no-store, max-age=0" },
   });
@@ -74,7 +74,7 @@ function Card({ variant, s, mascot }: { variant: Variant; s: CardStats; mascot: 
         fontFamily: "sans-serif",
       }}
     >
-      {/* left: the readout. Three bands — kicker (top), content (fills + centers),
+      {/* left: the readout. Three bands - kicker (top), content (fills + centers),
           footer (bottom). The middle band is flex:1 so tall content can never
           overlap the kicker/footer the way justify-content:space-between would. */}
       <div
@@ -210,7 +210,7 @@ function TierRow({ counts }: { counts: Record<TierKey, number> }) {
 
 // ---- variants -----------------------------------------------------------------
 
-// NB: every variant returns a SINGLE flex <div>, never a Fragment — Satori
+// NB: every variant returns a SINGLE flex <div>, never a Fragment - Satori
 // doesn't lay Fragment children out as flex items (they collapse onto each other).
 function Col({ gap, children }: { gap: number; children: React.ReactNode }) {
   return <div style={{ display: "flex", flexDirection: "column", gap }}>{children}</div>;
@@ -232,7 +232,7 @@ function Hours({ s }: { s: CardStats }) {
   return (
     <Col gap={22}>
       <Hero num={s.hoursNum} unit={s.hoursUnit} size={168} />
-      <Subline>{`≈ ${fmt(s.days)} days of my life — no regrets`}</Subline>
+      <Subline>{`≈ ${fmt(s.days)} days of my life - no regrets`}</Subline>
       <StatRow
         items={[
           { num: fmt(s.episodes), label: "episodes" },
@@ -271,7 +271,7 @@ function Tiers({ s }: { s: CardStats }) {
 
 function Taste({ s }: { s: CardStats }) {
   const max = Math.max(1, ...s.topGenres.map((g) => g.count));
-  const genres = s.topGenres.length ? s.topGenres : [{ name: "—", count: 0 }];
+  const genres = s.topGenres.length ? s.topGenres : [{ name: "-", count: 0 }];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, width: "100%" }}>
       {genres.map((g) => (
@@ -350,7 +350,7 @@ function Mascot({ mascot }: { mascot: string | null }) {
           style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }}
         />
       ) : (
-        // Designed empty slot — reads as an intentional brand panel, not a broken
+        // Designed empty slot - reads as an intentional brand panel, not a broken
         // image. Drop public/mascot/momo.png to fill it (see that dir's README).
         <div
           style={{

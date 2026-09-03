@@ -21,7 +21,7 @@ const VARIANTS: { id: VariantId; label: string; tweet: (s: CardStats) => string 
   {
     id: "hours",
     label: "Watch Hours",
-    tweet: (s) => `I've sunk ${s.hours} into anime — that's ${s.days} days of my life. no regrets 🎴`,
+    tweet: (s) => `I've sunk ${s.hours} into anime - that's ${s.days} days of my life. no regrets 🎴`,
   },
   {
     id: "collection",
@@ -68,7 +68,7 @@ function ShareModal({ stats, onClose }: { stats: CardStats; onClose: () => void 
   const [loaded, setLoaded] = useState(false);
 
   const activeVariant = VARIANTS.find((v) => v.id === active)!;
-  // Endpoint sends Cache-Control: no-store, so previews are always current — no nonce needed.
+  // Endpoint sends Cache-Control: no-store, so previews are always current - no nonce needed.
   const cardUrl = `/api/share-card?variant=${active}`;
 
   // Escape to close + lock background scroll while open.
@@ -115,7 +115,7 @@ function ShareModal({ stats, onClose }: { stats: CardStats; onClose: () => void 
 
   const postToX = useCallback(() => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const text = `${activeVariant.tweet(stats)} — built with OtakuOps`;
+    const text = `${activeVariant.tweet(stats)} - built with OtakuOps`;
     const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}${
       origin ? `&url=${encodeURIComponent(origin)}` : ""
     }`;
@@ -147,7 +147,7 @@ function ShareModal({ stats, onClose }: { stats: CardStats; onClose: () => void 
         transition={{ duration: 0.18, ease: [0.2, 0.7, 0.2, 1] }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* header — pinned, close always reachable */}
+        {/* header - pinned, close always reachable */}
         <div className="flex items-start justify-between gap-3 px-5 md:px-6 pt-5 md:pt-6 pb-4 shrink-0">
           <div>
             <div className="label mb-1">flex your empire</div>
@@ -158,7 +158,7 @@ function ShareModal({ stats, onClose }: { stats: CardStats; onClose: () => void 
           </button>
         </div>
 
-        {/* scrollable body — picker + preview */}
+        {/* scrollable body - picker + preview */}
         <div className="px-5 md:px-6 overflow-y-auto grow min-h-0">
           <div className="flex flex-wrap gap-2 mb-4">
             {VARIANTS.map((v) => (
@@ -205,7 +205,7 @@ function ShareModal({ stats, onClose }: { stats: CardStats; onClose: () => void 
           </div>
         </div>
 
-        {/* footer — pinned, actions never clipped */}
+        {/* footer - pinned, actions never clipped */}
         <div className="px-5 md:px-6 py-4 border-t border-[var(--border)] shrink-0">
           <div className="flex flex-wrap items-center gap-2">
             <button className="btn btn-primary text-sm" onClick={postToX}>
@@ -228,9 +228,9 @@ function ShareModal({ stats, onClose }: { stats: CardStats; onClose: () => void 
           </div>
           <p className="text-xs text-[var(--faint)] mt-3 leading-relaxed">
             {copyState === "copied"
-              ? "Card copied — paste it (⌘V / Ctrl+V) into your X post to attach it."
+              ? "Card copied - paste it (⌘V / Ctrl+V) into your X post to attach it."
               : copyState === "failed"
-                ? "Couldn't auto-copy here — hit Download, then attach the card to your post."
+                ? "Couldn't auto-copy here - hit Download, then attach the card to your post."
                 : "Post to X opens the composer prefilled and copies the card so you can paste it in."}
           </p>
         </div>

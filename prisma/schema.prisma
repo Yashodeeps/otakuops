@@ -1,9 +1,9 @@
-// OtakuOps data spine — Postgres (Neon on Vercel, and locally via the same URL).
+// OtakuOps data spine - Postgres (Neon on Vercel, and locally via the same URL).
 // Enums/arrays are modelled as validated strings + JSON so the schema stays
 // portable; the app layer (src/lib/enums.ts) is the source of truth for values.
 //
 // Sync the schema to the DB with:  pnpm prisma db push
-// (nullable @unique animeId still allows many manual stubs — Postgres treats
+// (nullable @unique animeId still allows many manual stubs - Postgres treats
 //  NULLs as distinct in unique indexes, same as SQLite.)
 
 generator client {
@@ -37,14 +37,14 @@ model Anime {
   lastRefreshedAt DateTime @default(now())
   createdAt       DateTime @default(now())
 
-  // shared metadata cache — one Anime can appear in many users' collections
+  // shared metadata cache - one Anime can appear in many users' collections
   collectionItems CollectionItem[]
 }
 
 // A user's collection. One row per (user, show).
 model CollectionItem {
   id              String  @id @default(cuid())
-  userId          String // Clerk user id — the scoping key
+  userId          String // Clerk user id - the scoping key
   animeId         Int? // nullable: manual stubs (no AniList match) allowed
   anime           Anime?  @relation(fields: [animeId], references: [id])
   manualTitle     String? // display title when animeId is null
@@ -64,7 +64,7 @@ model CollectionItem {
 
 // Per-user daily usage counters backing the free-tier rate limits
 // (src/lib/rateLimit.ts). One row per (user, UTC day, action); count increments
-// per metered request. Rows just accumulate — harmless and tiny; prune with a
+// per metered request. Rows just accumulate - harmless and tiny; prune with a
 // cron later if it ever matters.
 model UsageCounter {
   userId String

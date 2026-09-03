@@ -1,7 +1,7 @@
 // Anime character stickers scattered in the page background. Purely cosmetic:
 // aria-hidden, non-interactive, fixed behind all content, desktop-only (no gutter
 // room on mobile). Art comes from your PNGs in public/stickers/ (falls back to
-// public/mascot/). Nothing copyrighted is bundled by default — you supply the art,
+// public/mascot/). Nothing copyrighted is bundled by default - you supply the art,
 // same as the share-card mascot. Use art you have rights to. If no images exist,
 // nothing renders.
 import { readdir } from "node:fs/promises";
@@ -19,7 +19,7 @@ const SLOTS: { top: string; right: string; size: number; rot: number; op: number
   { top: "84%", right: "80%", size: 150, rot: -10, op: 0.8 },
 ];
 
-// Prefer public/stickers/, then public/mascot/ — the same runtime dir read the
+// Prefer public/stickers/, then public/mascot/ - the same runtime dir read the
 // share card uses, so it works on Vercel with no rebuild.
 async function listArt(): Promise<string[]> {
   for (const sub of ["stickers", "mascot"]) {
@@ -29,7 +29,7 @@ async function listArt(): Promise<string[]> {
         .sort();
       if (files.length) return files.map((f) => `/${sub}/${f}`);
     } catch {
-      /* dir doesn't exist — try the next */
+      /* dir doesn't exist - try the next */
     }
   }
   return [];

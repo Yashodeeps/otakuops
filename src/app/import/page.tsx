@@ -118,7 +118,7 @@ export default function ImportPage() {
         </div>
         <h1 className="display text-2xl mb-2">{importedCount} added to the empire</h1>
         <p className="text-[var(--muted)] text-sm mb-7">
-          Now the fun part — swipe through them and drop each into a bucket.
+          Now the fun part - swipe through them and drop each into a bucket.
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
           <Link href="/swipe" className="btn btn-primary">
@@ -145,7 +145,7 @@ export default function ImportPage() {
         <div className="label mb-1">import</div>
         <h1 className="display text-2xl md:text-3xl">Bring in your list</h1>
         <p className="text-[var(--muted)] text-sm mt-1.5">
-          Paste anything — rankings, statuses, bullets, commas. The parser figures it out.
+          Paste anything - rankings, statuses, bullets, commas. The parser figures it out.
         </p>
       </div>
 
@@ -200,7 +200,7 @@ export default function ImportPage() {
               <span className="font-medium">I&apos;ve watched the shows in my tiers</span>
               <span className="text-[var(--muted)]">
                 {" "}
-                — mark them watched (base season only, so hours stay conservative if your list is
+                - mark them watched (base season only, so hours stay conservative if your list is
                 behind on newer seasons). Turn off to leave ranked shows untriaged and confirm each
                 by swiping instead.
               </span>

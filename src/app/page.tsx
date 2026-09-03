@@ -27,7 +27,7 @@ function EmptyState() {
       <div className="label mb-4">no data // empire not initialized</div>
       <h1 className="display text-2xl md:text-3xl mb-3">Build your anime empire</h1>
       <p className="text-[var(--muted)] max-w-sm mx-auto mb-7 text-sm leading-relaxed">
-        Two ways to start: swipe through popular anime and build your list as you go — or paste a
+        Two ways to start: swipe through popular anime and build your list as you go - or paste a
         list you already keep somewhere and we&apos;ll parse it.
       </p>
       <div className="flex gap-3 justify-center flex-wrap">
@@ -124,7 +124,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        {/* status breakdown — monochrome bars */}
+        {/* status breakdown - monochrome bars */}
         <div className="panel p-5">
           <div className="label mb-4">by status</div>
           <div className="space-y-2.5">

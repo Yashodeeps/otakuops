@@ -110,7 +110,7 @@ export function heuristicParse(text: string): ParsedEntry[] {
     if (!line) continue;
 
     // Pure header lines start a new section. A tier header ("S Tier") and a
-    // status header ("Watching:") are different section kinds — hitting one
+    // status header ("Watching:") are different section kinds - hitting one
     // clears the other's context so an early "S tier" doesn't leak into a later
     // "Plan to watch" block.
     const ht = headerTier(line);

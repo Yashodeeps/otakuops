@@ -1,5 +1,5 @@
 // Chooses the parser: Grok (xAI) when a key is present (better on messy input),
-// local heuristic otherwise. Always degrades gracefully — if Grok errors, we
+// local heuristic otherwise. Always degrades gracefully - if Grok errors, we
 // fall back to the heuristic so the import never hard-fails.
 import { heuristicParse, type ParsedEntry } from "./parse";
 

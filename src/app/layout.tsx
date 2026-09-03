@@ -14,7 +14,7 @@ const display = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "OtakuOps — Anime Command Center",
+  title: "OtakuOps - Anime Command Center",
   description: "Your personal anime empire: import, swipe, rank, track.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "OtakuOps", statusBarStyle: "black-translucent" },

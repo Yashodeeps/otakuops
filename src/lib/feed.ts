@@ -1,5 +1,5 @@
 // The living feed: what's airing next from shows in your collection.
-// Refresh-on-open, but batched + cached — one paginated AniList query covers
+// Refresh-on-open, but batched + cached - one paginated AniList query covers
 // many titles, and we only refresh rows older than the staleness window, so we
 // never fan out one request per title (which would blow the rate limit).
 import { prisma } from "./prisma";

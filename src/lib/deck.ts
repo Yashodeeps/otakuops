@@ -73,7 +73,7 @@ export async function getDeck(
     return { cards: skipped.map(rowToCard), nextPage: page + 1, skippedCount };
   }
 
-  // anime already in the collection (any status) — never show these as discovery
+  // anime already in the collection (any status) - never show these as discovery
   const owned = await prisma.collectionItem.findMany({
     where: { userId, animeId: { not: null } },
     select: { animeId: true },
@@ -89,7 +89,7 @@ export async function getDeck(
     cards.push(...untriaged.map(rowToCard));
   }
 
-  // then popular discovery — perPage padded since we hard-filter owned below
+  // then popular discovery - perPage padded since we hard-filter owned below
   const popular = await fetchPopular({ excludeIds: ownedIds, page, perPage: 30 });
   for (const m of popular) {
     if (ownedSet.has(m.id)) continue; // never surface anything already in the collection

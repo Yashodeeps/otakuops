@@ -14,7 +14,7 @@ export function SetupNeeded() {
       <div className="label mb-2">setup // database not connected</div>
       <h1 className="display text-2xl mb-2">Almost there</h1>
       <p className="text-[var(--muted)] text-sm mb-3">
-        You&apos;re signed in — auth works. The last step is connecting a Postgres database so your
+        You&apos;re signed in - auth works. The last step is connecting a Postgres database so your
         empire has somewhere to live.
       </p>
       <p className="text-[var(--faint)] text-xs">

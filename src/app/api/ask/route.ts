@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   if (!question?.trim()) {
     return NextResponse.json({ error: "question required" }, { status: 400 });
   }
-  // Last few turns only — enough for follow-ups ("why?", "what about the other one?")
+  // Last few turns only - enough for follow-ups ("why?", "what about the other one?")
   // without re-sending the whole conversation on every ask.
   const prior = (Array.isArray(history) ? history : [])
     .slice(-6)
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
         {
           role: "system",
           content:
-            "You are the user's personal anime companion. You know their whole collection: each title with their watch status (watched/watching/half_finished/watchlist/dropped/untriaged) and their S/A/B/C/D tier. Answer their question using ONLY shows in their collection unless they ask for outside recommendations. Be concise, specific, and fun. Give a direct answer first, then a short reason. No preamble. Reply in plain text — no markdown, no asterisks or headers; use plain '- ' for lists." +
+            "You are the user's personal anime companion. You know their whole collection: each title with their watch status (watched/watching/half_finished/watchlist/dropped/untriaged) and their S/A/B/C/D tier. Answer their question using ONLY shows in their collection unless they ask for outside recommendations. Be concise, specific, and fun. Give a direct answer first, then a short reason. No preamble. Reply in plain text - no markdown, no asterisks or headers; use plain '- ' for lists." +
             `\n\nThe user's anime collection:\n${context}`,
         },
         ...prior,

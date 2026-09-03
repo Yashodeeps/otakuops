@@ -1,14 +1,14 @@
 // Click-history ranking signal for personalized search.
 //
 // No raw clicks are logged yet (there's no search UI to click in), so the signal
-// is derived from the interaction history we already have — the user's
+// is derived from the interaction history we already have - the user's
 // collection. The genres of shows a user has engaged with become affinity
 // weights the Ranking layer folds into a relevance score. A future search route
 // composes this with the existing data layer:
 //   clickSignal(await getCollection(userId))
 //
 // ponytail: proxy signal (collection interactions, not raw clicks); upgrade to a
-//   ClickEvent table fed by the results UI when search ships — same output shape.
+//   ClickEvent table fed by the results UI when search ships - same output shape.
 import type { Status } from "./enums";
 
 // genre -> affinity weight in [0,1]

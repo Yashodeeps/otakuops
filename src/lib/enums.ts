@@ -8,7 +8,7 @@ export const STATUSES = [
   "half_finished",
   "watchlist",
   "dropped",
-  "skipped", // dismissed in the swipe deck — hidden from the empire, reviewable
+  "skipped", // dismissed in the swipe deck - hidden from the empire, reviewable
 ] as const;
 export type Status = (typeof STATUSES)[number];
 
@@ -34,7 +34,7 @@ export const STATUS_META: Record<Status, { label: string }> = {
   skipped: { label: "Skipped" },
 };
 
-// Refined S–D ramp — the one place real color lives. Kept in sync with the
+// Refined S–D ramp - the one place real color lives. Kept in sync with the
 // --tier-* CSS variables in globals.css.
 export const TIER_META: Record<Tier, { label: string; color: string }> = {
   S: { label: "S", color: "#ff5d5d" },
@@ -43,7 +43,7 @@ export const TIER_META: Record<Tier, { label: string; color: string }> = {
   C: { label: "C", color: "#7bd88f" },
   D: { label: "D", color: "#5aa9e6" },
   E: { label: "E", color: "#a07be0" },
-  unranked: { label: "—", color: "#62626c" },
+  unranked: { label: "-", color: "#62626c" },
 };
 
 export function isStatus(v: unknown): v is Status {

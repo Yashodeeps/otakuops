@@ -1,5 +1,5 @@
 // Shared helpers for the shareable stats cards (see app/api/share-card/route.tsx).
-// Pure derivation + asset loading only — no `next/og` import here, so this file
+// Pure derivation + asset loading only - no `next/og` import here, so this file
 // stays importable from server components. Never import this from a client
 // component (loadMascot pulls in node:fs); pass CardStats down as a prop instead
 // or use a `import type` (erased at build).
@@ -35,10 +35,10 @@ export const OG = {
 export type TierKey = "S" | "A" | "B" | "C" | "D" | "E";
 export const TIER_KEYS: TierKey[] = ["S", "A", "B", "C", "D", "E"];
 
-// Display-ready view of the empire stats — one place computes the numbers so the
+// Display-ready view of the empire stats - one place computes the numbers so the
 // image (server) and the tweet text (client, via props) never disagree.
 export type CardStats = {
-  hours: string; // formatted, e.g. "1,204h" — used in tweet text
+  hours: string; // formatted, e.g. "1,204h" - used in tweet text
   hoursNum: string; // hero number only, e.g. "1,204"
   hoursUnit: string; // "hrs" | "min"
   days: number;

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* ink surfaces — subtle near-neutral dark, a hair of warmth */
+  /* ink surfaces - subtle near-neutral dark, a hair of warmth */
   --bg: #0a0a0b;
   --surface: #141316;
   --surface-2: #1b191d;
@@ -14,13 +14,13 @@
   --muted: #a29aa0;
   --faint: #6a636c;
 
-  /* single accent — sakura pink, the only non-tier hue (flat, no gradients) */
+  /* single accent - sakura pink, the only non-tier hue (flat, no gradients) */
   --accent: #ff4d8d;
   --accent-hover: #ff6ba1;
   --accent-dim: rgba(255, 77, 141, 0.13);
   --accent-ink: #2a0714;
 
-  /* tier ramp — the one place color lives */
+  /* tier ramp - the one place color lives */
   --tier-s: #ff5d5d;
   --tier-a: #ff9f45;
   --tier-b: #ffd447;
@@ -71,7 +71,7 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* uppercase mono labels — the console readout voice */
+/* uppercase mono labels - the console readout voice */
 .label {
   font-family: var(--font-mono), monospace;
   font-size: 0.68rem;
