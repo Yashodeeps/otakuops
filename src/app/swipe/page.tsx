@@ -189,6 +189,26 @@ function FlingBridge({ fling }: { fling: (status: Status, d: Dir) => void }) {
   return null;
 }
 
+// A cold cover image makes the swipe wait on the network and then on decode,
+// which is most of the per-card budget. Warm the next few off the render path.
+const PREFETCH_AHEAD = 3;
+
+function usePrefetchCovers(cards: DeckCard[] | null, i: number) {
+  const warmed = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!cards) return;
+    for (const card of cards.slice(i + 1, i + 1 + PREFETCH_AHEAD)) {
+      const url = card.coverImage;
+      if (!url || warmed.current.has(url)) continue;
+      warmed.current.add(url);
+      const img = new Image();
+      img.src = url;
+      // decode now, off the frame that swaps the card; aborts are expected
+      img.decode?.().catch(() => {});
+    }
+  }, [cards, i]);
+}
+
 type HistoryEntry = { card: DeckCard; createdId?: string; committed: Status };
 
 export default function SwipePage() {
@@ -201,6 +221,8 @@ export default function SwipePage() {
   const history = useRef<HistoryEntry[]>([]);
   const loadingMore = useRef(false);
   const seen = useRef<Set<number>>(new Set());
+
+  usePrefetchCovers(cards, i);
 
   const loadDeck = useCallback((m: "normal" | "skipped") => {
     setCards(null);
