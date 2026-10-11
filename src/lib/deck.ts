@@ -4,7 +4,14 @@
 import { prisma } from "./prisma";
 import { fetchPopular, type AniListMedia } from "./anilist";
 import { getCollection } from "./collection";
+import { ttlCache } from "./ttlCache";
 import type { Tier, Status } from "./enums";
+
+// Popular discovery is the same list for every caller with the same owned set,
+// and the chart moves slowly, so an identical read inside the window does not
+// need to hit AniList again. That is the empty-collection path every new user
+// starts on, plus remounts and retries within one session.
+const popularCache = ttlCache<AniListMedia[]>(1000 * 60 * 5);
 
 export type DeckCard = {
   kind: "collection" | "discover";
@@ -90,7 +97,11 @@ export async function getDeck(
   }
 
   // then popular discovery - perPage padded since we hard-filter owned below
-  const popular = await fetchPopular({ excludeIds: ownedIds, page, perPage: 30 });
+  // (sorted ids so the same owned set is always the same cache key)
+  const cacheKey = JSON.stringify([page, [...ownedIds].sort((a, b) => a - b)]);
+  const popular = await popularCache.get(cacheKey, () =>
+    fetchPopular({ excludeIds: ownedIds, page, perPage: 30 }),
+  );
   for (const m of popular) {
     if (ownedSet.has(m.id)) continue; // never surface anything already in the collection
     cards.push({
