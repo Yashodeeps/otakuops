@@ -1,8 +1,33 @@
+"use client";
+
+import { useState } from "react";
 import { Database } from "lucide-react";
 
 // Shown when the app is authenticated but the Postgres DB isn't reachable yet
 // (e.g. DATABASE_URL not set). Keeps first-run from crashing into a 500.
 export function SetupNeeded() {
+  const [checking, setChecking] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  // Ask the server whether the database answers yet, so finishing setup doesn't
+  // mean guessing when to reload.
+  async function recheck() {
+    setChecking(true);
+    try {
+      const res = await fetch("/api/status");
+      const { db } = (await res.json()) as { db?: string };
+      setResult(
+        db === "up"
+          ? "Database answered. Reload the page."
+          : "Still no answer from the database.",
+      );
+    } catch {
+      setResult("Could not reach the app to ask.");
+    } finally {
+      setChecking(false);
+    }
+  }
+
   return (
     <div className="panel p-10 text-center mt-8 max-w-lg mx-auto rise">
       <div
@@ -22,6 +47,14 @@ export function SetupNeeded() {
         <span className="readout">.env</span>, then run{" "}
         <span className="readout">pnpm prisma db push</span>.
       </p>
+      <button
+        onClick={recheck}
+        disabled={checking}
+        className="mt-5 text-xs underline text-[var(--muted)] disabled:opacity-50"
+      >
+        {checking ? "Checking..." : "Check connection"}
+      </button>
+      {result && <p className="text-[var(--faint)] text-xs mt-2">{result}</p>}
     </div>
   );
 }
